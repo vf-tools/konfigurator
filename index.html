@@ -1327,9 +1327,9 @@ function calcItem(svc,qty,vf,pf,ov){
   if(ov!=null&&ov!=='')return parseFloat(ov);
   var price;
   if(svc.material_cost||svc.labor_hours){
-    var mat=(svc.material_cost||0)*(1+(S.materialMarkup||0)/100)*1.19;
-    var lohn=(svc.labor_hours||0)*(S.hourlyRate||85)*1.19;
-    price=(mat+lohn)*(1+(S.profitMargin||0)/100);
+    var matNetto=(svc.material_cost||0)*(1+(S.materialMarkup||0)/100);
+    var lohnNetto=(svc.labor_hours||0)*(S.hourlyRate||85);
+    price=(matNetto+lohnNetto)*(1+(S.profitMargin||0)/100)*1.19;
   } else {
     price=svc.base_price;
   }
@@ -1375,15 +1375,29 @@ function totals(){
   return{sub:sub,attrS:attrS,disc:disc,total:sub+attrS+disc,vf:vf,dPct:dPct};
 }
 
-function configTotal(cfg,items){
+function configTotal(cfg,items,cfgAttrs){
   if((!items||!items.length)&&cfg.estimated_value)return parseFloat(cfg.estimated_value)||0;
   if(!items||!items.length)return 0;
   var veh=S.vehicles.find(function(v){return v.id==cfg.vehicle_model_id});
   var vf=veh?parseFloat(veh.vehicle_factor):1;
   var sub=0;
   items.forEach(function(item){var svc=S.services.find(function(s){return s.id===item.service_id});if(svc)sub+=calcItem(svc,item.quantity,vf,S.priceFactor,item.manual_override_price)});
+  var attrS=0;
+  if(cfgAttrs&&cfgAttrs.length){
+    var opts=cfgAttrs.map(function(ca){return S.attrOptions.find(function(o){return o.id===ca.option_id})}).filter(Boolean);
+    opts.forEach(function(opt){
+      if(opt.price_type==='none')return;
+      if(opt.price_type==='fixed'){attrS+=parseFloat(opt.price_value)||0;return}
+      if(opt.price_type==='percent'){
+        var pct=(parseFloat(opt.price_value)||0)/100;
+        if(opt.price_target==='total'){attrS+=sub*pct}
+        else{var catId=parseInt(opt.price_target);var catSub=0;items.forEach(function(item){var svc=S.services.find(function(s){return s.id===item.service_id});if(svc&&svc.category_id===catId)catSub+=calcItem(svc,item.quantity,vf,S.priceFactor,item.manual_override_price)});attrS+=catSub*pct}
+      }
+    });
+  }
   var dPct=parseFloat(cfg.configuration_discount_percent)||0;
-  return sub+(sub*(dPct/100));
+  var disc=(sub+attrS)*(dPct/100);
+  return sub+attrS+disc;
 }
 
 function configWinProb(cfg){
@@ -1415,20 +1429,25 @@ async function maybeSnapshot(){
   if(existing.data&&existing.data.length>0)return; // already done today
 
   var allItems=DEMO?DB.config_items:[];
+  var allAttrs=DEMO?DB.config_attrs:[];
   if(!DEMO&&_sb){
     var r=await _sb.from('config_items').select('*');
     if(r.data)allItems=r.data;
+    var r2=await _sb.from('config_attrs').select('*');
+    if(r2.data)allAttrs=r2.data;
   }
 
   var configs=S.configs.filter(function(c){return c.status!=='verworfen'&&c.status!=='abgeschlossen'});
   var pipelineVal=configs.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
-    return s+configTotal(c,items);
+    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
+    return s+configTotal(c,items,attrs);
   },0);
   var weightedVal=configs.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
+    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
     var prob=configWinProb(c)/100;
-    return s+configTotal(c,items)*prob;
+    return s+configTotal(c,items,attrs)*prob;
   },0);
 
   await db.insert('pipeline_snapshots',{
@@ -1488,6 +1507,7 @@ async function renderHome(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
   var allItems=DEMO?DB.config_items:[];
+  var allAttrs=DEMO?DB.config_attrs:[];
 
   var today=todayStr();
   var dateStr=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
@@ -1497,7 +1517,8 @@ async function renderHome(){
   var pipeline=S.configs.filter(function(c){return c.status!=='abgeschlossen'&&c.status!=='verworfen'});
   var pipeVal=pipeline.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
-    return s+configTotal(c,items);
+    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
+    return s+configTotal(c,items,attrs);
   },0);
   var open=S.configs.filter(function(c){return c.status==='Entwurf'||c.status==='Erstgespräch'});
 
@@ -1597,18 +1618,21 @@ async function renderPipeline(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
   var allItems=DEMO?DB.config_items:[];
+  var allAttrs=DEMO?DB.config_attrs:[];
   var today=todayStr();
 
   var pipeline=S.configs.filter(function(c){return c.status!=='verworfen'&&c.status!=='abgeschlossen'});
   var won=S.configs.filter(function(c){return c.status==='abgeschlossen'});
   var pipeVal=pipeline.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
-    return s+configTotal(c,items);
+    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
+    return s+configTotal(c,items,attrs);
   },0);
   var weightedVal=pipeline.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
+    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
     var prob=configWinProb(c)/100;
-    return s+configTotal(c,items)*prob;
+    return s+configTotal(c,items,attrs)*prob;
   },0);
 
   $('pipeline-sub').textContent=pipeline.length+' offene Projekte';
@@ -1622,7 +1646,8 @@ async function renderPipeline(){
     var cards=S.configs.filter(function(c){return c.status===status});
     var cardsHtml=cards.map(function(c){
       var items=allItems.filter(function(i){return i.configuration_id===c.id});
-      var val=configTotal(c,items);
+      var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
+      var val=configTotal(c,items,attrs);
       var prob=configWinProb(c);
       var tag='';
       var lastAct='';
@@ -1673,6 +1698,7 @@ async function renderReview(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
   var allItems=DEMO?DB.config_items:[];
+  var allAttrs=DEMO?DB.config_attrs:[];
   var snapshots=await db.get('pipeline_snapshots');
 
   var sources=[...new Set(S.configs.map(function(c){return c.customer_source}).filter(Boolean))];
@@ -1691,7 +1717,8 @@ async function renderReview(){
 
   S.configs.filter(function(c){return!filterSrc||c.customer_source===filterSrc}).forEach(function(c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
-    var val=configTotal(c,items);
+    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
+    var val=configTotal(c,items,attrs);
     if(c.status==='abgeschlossen'){
       // Use closed_at for won deals, fall back to updated_at
       var wonDate=new Date(c.closed_at||c.updated_at||c.created_at||Date.now());
@@ -1743,6 +1770,7 @@ async function renderReview(){
     var wonVal=b.won.reduce(function(s,x){return s+x.val},0);
     var pipeVal=b.pipeline.reduce(function(s,x){return s+x.val},0);
     var conv=b.won.length+b.pipeline.length>0?Math.round(b.won.length/(b.won.length+b.pipeline.length)*100):0;
+    var valConv=wonVal+pipeVal>0?Math.round(wonVal/(wonVal+pipeVal)*100):0;
     if(!b.won.length&&!b.pipeline.length)return'';
     var wPipe2=b.pipeline.reduce(function(s,x){return s+x.val*configWinProb(x.c)/100},0);
     return'<tr>'
@@ -1753,12 +1781,13 @@ async function renderReview(){
       +'<td>'+b.won.length+'</td>'
       +'<td style="font-variant-numeric:tabular-nums;color:var(--green)">'+(wonVal?fmt(wonVal):'&mdash;')+'</td>'
       +'<td>'+(conv?conv+'%':'&mdash;')+'</td>'
+      +'<td style="color:var(--green)">'+(valConv?valConv+'%':'&mdash;')+'</td>'
       +'</tr>';
   }).join('');
 
   // KPI calculations
   var wonConfigs=S.configs.filter(function(c){return c.status==='abgeschlossen'&&(!filterSrc||c.customer_source===filterSrc)});
-  var wonVals=wonConfigs.map(function(c){var items=allItems.filter(function(i){return i.configuration_id===c.id});return configTotal(c,items)}).filter(function(v){return v>0});
+  var wonVals=wonConfigs.map(function(c){var items=allItems.filter(function(i){return i.configuration_id===c.id});var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});return configTotal(c,items,attrs)}).filter(function(v){return v>0});
   var avgWonVal=wonVals.length?wonVals.reduce(function(a,b){return a+b},0)/wonVals.length:0;
   var closeTimes=wonConfigs.filter(function(c){return c.closed_at&&c.created_at}).map(function(c){return Math.floor((new Date(c.closed_at)-new Date(c.created_at))/86400000)}).filter(function(d){return d>=0});
   var avgDays=closeTimes.length?Math.round(closeTimes.reduce(function(a,b){return a+b},0)/closeTimes.length):0;
@@ -1770,19 +1799,22 @@ async function renderReview(){
       +'<div class="ps-card"><div class="ps-label">Abgeschlossen gesamt</div><div class="ps-val">'+wonConfigs.length+'</div><div class="ps-sub">im gewählten Zeitraum</div></div>'
       +'</div>';
   }
-  // Conversion by source
-  var allSources=[...new Set(S.configs.filter(function(c){return c.customer_source}).map(function(c){return c.customer_source}))];
+  // Conversion by source (filtered by time period)
+  var startDate=new Date(now.getFullYear(),now.getMonth()-(months-1),1);
+  var periodConfigs=S.configs.filter(function(c){var d=new Date(c.created_at||0);return d>=startDate});
+  var allSources=[...new Set(periodConfigs.filter(function(c){return c.customer_source}).map(function(c){return c.customer_source}))];
   var sourceHtml='';
   if(allSources.length>1){
     var srcRows=allSources.map(function(src){
-      var total=S.configs.filter(function(c){return c.customer_source===src}).length;
-      var won=S.configs.filter(function(c){return c.customer_source===src&&c.status==='abgeschlossen'}).length;
+      var srcConfs=periodConfigs.filter(function(c){return c.customer_source===src});
+      var total=srcConfs.length;
+      var wonConfs=srcConfs.filter(function(c){return c.status==='abgeschlossen'});
+      var won=wonConfs.length;
       var conv=total?Math.round(won/total*100):0;
-      var srcItems=allItems;
-      var wonVal=S.configs.filter(function(c){return c.customer_source===src&&c.status==='abgeschlossen'}).reduce(function(s,c){var it=srcItems.filter(function(i){return i.configuration_id===c.id});return s+configTotal(c,it)},0);
+      var wonVal=wonConfs.reduce(function(s,c){var it=allItems.filter(function(i){return i.configuration_id===c.id});var at=allAttrs.filter(function(a){return a.configuration_id===c.id});return s+configTotal(c,it,at)},0);
       return '<tr><td style="font-weight:500">'+esc(src)+'</td><td style="text-align:center">'+total+'</td><td style="text-align:center">'+won+'</td><td style="text-align:center;font-weight:600;color:var(--green)">'+conv+'%</td><td style="font-variant-numeric:tabular-nums">'+(wonVal?fmt(wonVal):'&mdash;')+'</td></tr>';
     }).join('');
-    sourceHtml='<div style="margin-top:20px"><div class="section-lbl" style="margin-bottom:8px">Conversion nach Quelle</div>'
+    sourceHtml='<div style="margin-top:20px"><div class="section-lbl" style="margin-bottom:8px">Conversion nach Quelle (letzten '+months+' Monate)</div>'
       +'<div class="review-tbl"><table><thead><tr><th>Quelle</th><th>Anfragen</th><th>Gewonnen</th><th>Conversion</th><th>Gewonnen €</th></tr></thead><tbody>'+srcRows+'</tbody></table></div></div>';
   }
 
@@ -1795,7 +1827,7 @@ async function renderReview(){
     +'</div></div>'
     +(snapshotRows?'<div style="margin-bottom:20px"><div class="section-lbl" style="margin-bottom:8px">Pipeline-Verlauf (täglich)</div>'
     +'<div class="review-tbl"><table><thead><tr><th>Datum</th><th>Anzahl</th><th>Pipeline €</th><th>Gewichtet €</th></tr></thead><tbody>'+snapshotRows+'</tbody></table></div></div>':'')
-    +'<div class="review-tbl"><table><thead><tr><th>Monat</th><th>Anz.</th><th>Pipeline €</th><th>Gewichtet €</th><th>Gewonnen</th><th>Gewonnen €</th><th>Conversion</th></tr></thead>'
+    +'<div class="review-tbl"><table><thead><tr><th>Monat</th><th>Anz.</th><th>Pipeline €</th><th>Gewichtet €</th><th>Gewonnen</th><th>Gewonnen €</th><th>Conv. Anz.</th><th>Conv. \u20ac</th></tr></thead>'
     +'<tbody>'+(tableRows||'<tr><td colspan="6" style="text-align:center;color:var(--ink3);padding:24px">Keine Daten</td></tr>')+'</tbody></table></div>'
     +kpiHtml
     +sourceHtml;
@@ -2267,9 +2299,9 @@ function renderPositionen(){
   el.innerHTML='<table class="pos-tbl"><thead><tr><th style="width:44px"></th><th>Leistung</th><th>Menge</th><th class="hide-int">Basis</th><th>Endpreis</th><th class="hide-int">Material (1/3)</th><th class="hide-int">Stunden (2/3)</th><th class="hide-int">Override</th></tr></thead>'
     +'<tbody>'+rows+'</tbody>'
     +'<tfoot>'
-    +'<tr><td colspan="2" style="font-weight:700">Gesamt Verkauf</td><td></td><td class="hide-int"></td><td>'+fmt(t.total)+'</td><td class="hide-int" style="color:var(--ink2)">'+fmt(iMat)+'</td><td class="hide-int" style="color:var(--ink2)">'+iH.toFixed(1)+'</td><td class="hide-int"></td></tr>'
-    +'<tr class="hide-int"><td colspan="2" style="font-size:11px;color:var(--ink2)">Interne Kosten ('+(S.hourlyRate||85).toFixed(0)+' €/h)</td><td></td><td></td><td style="font-size:11px;font-weight:600;color:var(--amber)">'+fmt(iMat+iH*(S.hourlyRate||85))+'</td><td></td><td></td><td></td></tr>'
-    +'<tr class="hide-int"><td colspan="2" style="font-size:11px;font-weight:700;color:var(--green)">Deckungsbeitrag</td><td></td><td></td><td style="font-size:11px;font-weight:700;color:var(--green)">'+fmt(t.total-(iMat+iH*(S.hourlyRate||85)))+'</td><td></td><td></td><td></td></tr>'
+    +'<tr><td colspan="2" style="font-weight:700">Gesamt Verkauf (brutto)</td><td></td><td class="hide-int"></td><td>'+fmt(t.total)+'</td><td class="hide-int" style="color:var(--ink2)">'+fmt(iMat)+'</td><td class="hide-int" style="color:var(--ink2)">'+iH.toFixed(1)+'</td><td class="hide-int"></td></tr>'
+    +'<tr class="hide-int"><td colspan="2" style="font-size:11px;color:var(--ink2)">Selbstkosten (Material-EK + Lohn netto)</td><td></td><td></td><td style="font-size:11px;font-weight:600;color:var(--amber)">'+fmt(iMat+iH*(S.hourlyRate||85))+'</td><td></td><td></td><td></td></tr>'
+    +'<tr class="hide-int"><td colspan="2" style="font-size:11px;font-weight:700;color:var(--green)">Deckungsbeitrag</td><td></td><td></td><td style="font-size:11px;font-weight:700;color:var(--green)">'+fmt(t.total-(iMat+iH*(S.hourlyRate||85)))+' <span style="font-weight:400;font-size:10px">('+(t.total>0?Math.round((t.total-(iMat+iH*(S.hourlyRate||85)))/t.total*100):0)+'%)</span></td><td></td><td></td><td></td></tr>'
     +'</tfoot></table>';
 }
 
@@ -3144,16 +3176,15 @@ function updateCalcExample(){
   var mm=parseFloat($('mm-in')?$('mm-in').value:S.materialMarkup)||0;
   var pm=parseFloat($('pm-in')?$('pm-in').value:S.profitMargin)||0;
   var matNetto=svc.material_cost*(1+mm/100);
-  var matBrutto=matNetto*1.19;
   var lohnNetto=svc.labor_hours*hr;
-  var lohnBrutto=lohnNetto*1.19;
-  var herstellkosten=matBrutto+lohnBrutto;
-  var angebot=herstellkosten*(1+pm/100);
+  var nettoSumme=matNetto+lohnNetto;
+  var mitWG=nettoSumme*(1+pm/100);
+  var angebot=mitWG*1.19;
   el.innerHTML='<strong>'+esc(svc.name.split(':')[0])+'</strong> (ID '+svc.id+')<br>'
-    +'Material netto: '+fmt(svc.material_cost)+' \u00d7 '+(1+mm/100).toFixed(2)+' = '+fmt(matNetto)+' \u2192 brutto: '+fmt(matBrutto)+'<br>'
-    +'Lohn netto: '+svc.labor_hours+'h \u00d7 '+fmt(hr)+' = '+fmt(lohnNetto)+' \u2192 brutto: '+fmt(lohnBrutto)+'<br>'
-    +'Herstellkosten: '+fmt(herstellkosten)+'<br>'
-    +'<strong>Angebotspreis: '+fmt(angebot)+'</strong>'+(pm>0?' (inkl. '+pm+'% W&G)':'');
+    +'Material netto: '+fmt(svc.material_cost)+' \u00d7 '+(1+mm/100).toFixed(2)+' = '+fmt(matNetto)+'<br>'
+    +'Lohn netto: '+svc.labor_hours+'h \u00d7 '+fmt(hr)+' = '+fmt(lohnNetto)+'<br>'
+    +'Netto-Summe: '+fmt(nettoSumme)+(pm>0?' \u00d7 '+(1+pm/100).toFixed(2)+' (W&G) = '+fmt(mitWG):'')+'<br>'
+    +'<strong>Angebotspreis (brutto): '+fmt(angebot)+'</strong>';
 }
 async function toggleA(t,id,cur){await db.update(t,id,{active:!cur});await loadMaster();renderABody()}
 
@@ -3310,12 +3341,12 @@ function updateSvcCalcPreview(){
   var hours=parseFloat($('es-lh')?$('es-lh').value:0)||0;
   if(!matEk&&!hours){el.innerHTML='<span style="color:var(--ink3)">Material oder Stunden eingeben f\u00fcr Kalkulation</span>';return}
   var mm=S.materialMarkup||0;var pm=S.profitMargin||0;var hr=S.hourlyRate||85;
-  var matBrutto=matEk*(1+mm/100)*1.19;
-  var lohnBrutto=hours*hr*1.19;
-  var herstellkosten=matBrutto+lohnBrutto;
-  var angebot=herstellkosten*(1+pm/100);
-  el.innerHTML='<strong>Kalkulierter Preis: '+fmt(angebot)+'</strong>'
-    +' <span style="color:var(--ink3)">(Mat. '+fmt(matBrutto)+' + Lohn '+fmt(lohnBrutto)
+  var matNetto2=matEk*(1+mm/100);
+  var lohnNetto2=hours*hr;
+  var nettoSum=(matNetto2+lohnNetto2)*(1+pm/100);
+  var angebot=nettoSum*1.19;
+  el.innerHTML='<strong>Kalkulierter Preis: '+fmt(angebot)+' (brutto)</strong>'
+    +' <span style="color:var(--ink3)">(Mat. '+fmt(matNetto2)+' + Lohn '+fmt(lohnNetto2)
     +(pm>0?' + '+pm+'% W&G':'')+')</span>';
 }
 function updateSubOpts(catId){
