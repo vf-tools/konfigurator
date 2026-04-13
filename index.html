@@ -3128,6 +3128,7 @@ async function renderABody(){
       cs.forEach(function(s){
         var thumb=s.image_url?'<img src="'+esc(s.image_url)+'" style="width:40px;height:28px;object-fit:cover;border-radius:3px" onerror="this.style.display=\'none\'">':'<div style="width:40px;height:28px;background:var(--surface3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px">'+(ICO[s.id]||'📦')+'</div>';
         html+='<div class="asvc">'+thumb
+          +'<span style="font-size:10px;color:var(--ink3);min-width:24px;text-align:right;font-variant-numeric:tabular-nums">'+s.id+'</span>'
           +'<div><strong style="font-size:13px">'+esc(s.name)+'</strong>'+(s.applies_vehicle_factor?'<span class="fzg" style="margin-left:4px">\u00d7Fzg</span>':'')+'<br><span style="font-size:11px;color:var(--ink3)">'+(s.subcategory_id?esc(subMap[s.subcategory_id]||'')+' &middot; ':'')+esc(s.description||'')+'</span></div>'
           +'<span style="font-size:13px;font-weight:700">'+fmt(s.base_price)+'</span>'
           +'<span class="badge '+(s.active?'b-green':'b-red')+'">'+(s.active?'Aktiv':'Inaktiv')+'</span>'
