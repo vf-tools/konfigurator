@@ -1314,9 +1314,10 @@ async function loadMaster(){
   S.services=results[2].data.filter(function(s){return s.active});
   S.vehicles=results[3].data.filter(function(v){return v.active});
   S.priceFactor=parseFloat(results[4])||1.0;
-  db.getSetting('hourly_rate').then(function(v){S.hourlyRate=parseFloat(v)||85.0});
-  db.getSetting('material_markup').then(function(v){S.materialMarkup=parseFloat(v)||0});
-  db.getSetting('profit_margin').then(function(v){S.profitMargin=parseFloat(v)||0});
+  var calcSettings=await Promise.all([db.getSetting('hourly_rate'),db.getSetting('material_markup'),db.getSetting('profit_margin')]);
+  S.hourlyRate=parseFloat(calcSettings[0])||85.0;
+  S.materialMarkup=parseFloat(calcSettings[1])||0;
+  S.profitMargin=parseFloat(calcSettings[2])||0;
   S.attrGroups=results[5].data.filter(function(g){return g.active}).sort(function(a,b){return a.sort_order-b.sort_order});
   S.attrOptions=results[6].data.filter(function(o){return o.active}).sort(function(a,b){return a.sort_order-b.sort_order});
 }
@@ -1533,7 +1534,7 @@ async function renderHome(){
       var label=isOD?'Überfällig &mdash; '+new Date(c.followup_date).toLocaleDateString('de-DE'):'Heute';
       return '<div class="today-item" onclick="openConfig('+c.id+')">'
         +'<div><div class="today-item-name">'+esc(c.customer_name)+'</div>'
-        +'<div class="today-item-sub">'+esc(c.status)+' &middot; '+esc(c.vehicle_name||'&mdash;')+'</div></div>'
+        +'<div class="today-item-sub">'+esc(c.status)+' &middot; '+esc(c.vehicle_name||'\u2014')+'</div></div>'
         +'<span class="today-item-date '+(isOD?'date-overdue':'date-today')+'">'+label+'</span>'
         +'</div>';
     }).join('');
@@ -1550,7 +1551,7 @@ async function renderHome(){
     $('home-recent').innerHTML=recent.map(function(c){
       return '<div class="config-card" onclick="openConfig('+c.id+')">'
         +'<div><div class="card-name">'+esc(c.customer_name)+'</div>'
-        +'<div class="card-sub">'+esc(c.vehicle_name||'&mdash;')+' &middot; '+esc(c.status)+'</div>'
+        +'<div class="card-sub">'+esc(c.vehicle_name||'\u2014')+' &middot; '+esc(c.status)+'</div>'
       +'<div style="margin-top:5px"><span class="ball-badge '+((!c.ball_at||c.ball_at==='uns')?'ball-us':'ball-kunde')+'">'+
       ((!c.ball_at||c.ball_at==='uns')?'&#9679; Bei uns':'&#9679; Beim Kunden')+'</span></div>'
       +'</div>'
@@ -1585,7 +1586,7 @@ function renderConfigList(q){
   el.innerHTML=list.map(function(c){
     return '<div class="config-card" onclick="openConfig('+c.id+')">'
       +'<div><div class="card-name">'+esc(c.customer_name)+'</div>'
-      +'<div class="card-sub">'+esc(c.vehicle_name||'&mdash;')+' &middot; v'+(c.version_number||1)+' &middot; '+esc(c.time_horizon||'&mdash;')+'</div></div>'
+      +'<div class="card-sub">'+esc(c.vehicle_name||'\u2014')+' &middot; v'+(c.version_number||1)+' &middot; '+esc(c.time_horizon||'\u2014')+'</div></div>'
       +'<span class="badge" style="background:'+(SCOL[c.status]||'#888')+'15;color:'+(SCOL[c.status]||'#888')+'">'+esc(c.status||'Entwurf')+'</span>'
       +'</div>';
   }).join('');
@@ -1645,7 +1646,7 @@ async function renderPipeline(){
       var ballBadge='<div class="ball-badge '+(ballOverdue?'ball-overdue':ballAt==='uns'?'ball-us':'ball-kunde')+'">'+(ballAt==='uns'?'&#9679; Bei uns':'&#9679; Beim Kunden'+(ballOverdue?' · '+ballDays+'d':''))+'</div>';
       return '<div class="kcard" onclick="openConfig('+c.id+')">'
         +'<div class="kcard-name">'+esc(c.customer_name)+'</div>'
-        +'<div class="kcard-veh">'+esc(c.vehicle_name||'&mdash;')+'</div>'
+        +'<div class="kcard-veh">'+esc(c.vehicle_name||'\u2014')+'</div>'
         +phone
         +ballBadge
         +'<div class="kcard-footer">'
