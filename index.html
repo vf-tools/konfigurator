@@ -600,7 +600,7 @@ textarea.f-input{resize:vertical;height:82px}
 }
 .admin-tbl td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 .asvc{
-  display:grid;grid-template-columns:42px 1fr auto auto auto auto;
+  display:grid;grid-template-columns:42px 28px 1fr auto auto auto auto;
   gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);
 }
 .img-up{
@@ -1080,7 +1080,7 @@ async function applySupabase(){
 
 // ─── LOCAL STORE ─────────────────────────────────────────────────────────────
 var DB={
-  settings:[{key:'price_adjustment_factor',value:'1.00'},{key:'hourly_rate',value:'98.00'}],
+  settings:[{key:'price_adjustment_factor',value:'1.00'},{key:'hourly_rate',value:'82.35'},{key:'material_markup',value:'0'},{key:'profit_margin',value:'0'}],
   categories:[
     {id:1,name:'Basis Aufbau',sort_order:1,active:true},
     {id:2,name:'Karosseriearbeiten',sort_order:2,active:true},
@@ -1098,119 +1098,119 @@ var DB={
     {id:5,name:'MAN TGE L3',manufacturer:'MAN',length_class:'L3',height_class:'H2',vehicle_factor:1.10,active:true},
   ],
   services:[
-    {id:1,name:'Geräusch- und Temperatur-Isolation: Armaflex / Vanue 19 mm / 3 mm / 19 + 3 mm',category_id:1,subcategory_id:null,base_price:2546.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:1,image_url:null,is_info:false,material_cost:848.78,labor_hours:17.5},
-    {id:2,name:'Unterkonstruktion: sicher und verkehrstauglich (Boden UK, Wand UK, Nietmuttern)',category_id:1,subcategory_id:null,base_price:5099.82,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:2,image_url:null,is_info:false,material_cost:1699.94,labor_hours:34.5},
-    {id:3,name:'Gefilzte Wandpaneele: für eine angenehme Raumakustik, Individualanfertigung',category_id:1,subcategory_id:null,base_price:3194.3,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:3,image_url:null,is_info:false,material_cost:1064.77,labor_hours:21.5},
-    {id:4,name:'Akustikdecke Eiche: mit dimmbarer LED-Beleuchtung',category_id:1,subcategory_id:null,base_price:2306.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:4,image_url:null,is_info:false,material_cost:768.78,labor_hours:15.5},
-    {id:5,name:'Akustikdecke Eiche: mit dimmbarer LED-Beleuchtung und integrierter Dachluke / MaxxFan',category_id:1,subcategory_id:null,base_price:2875.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:5,image_url:null,is_info:false,material_cost:958.37,labor_hours:19.5},
-    {id:6,name:'Leichtbaudecke Hell: mit dimmbarer LED-Beleuchtung',category_id:1,subcategory_id:null,base_price:2066.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:6,image_url:null,is_info:false,material_cost:688.78,labor_hours:14.0},
-    {id:7,name:'Leichtbaudecke Hell: mit dimmbarer LED-Beleuchtung und integrierter Dachluke / MaxxFan',category_id:1,subcategory_id:null,base_price:2635.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:7,image_url:null,is_info:false,material_cost:878.37,labor_hours:18.0},
-    {id:8,name:'Bodenplatte: mit gemütlichem Linoleum-Belag',category_id:1,subcategory_id:null,base_price:2995.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:8,image_url:null,is_info:false,material_cost:998.37,labor_hours:20.5},
-    {id:9,name:'Bodenplatte: mit robustem Eiche-Vinyl-Belag',category_id:1,subcategory_id:null,base_price:3374.3,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:9,image_url:null,is_info:false,material_cost:1124.77,labor_hours:23.0},
-    {id:10,name:'Bodenplatte: mit gemütlichem Linoleum-Belag / robustem Eiche-Vinyl-Belag und Teppich im Heck',category_id:1,subcategory_id:null,base_price:2995.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:10,image_url:null,is_info:false,material_cost:998.37,labor_hours:20.5},
-    {id:11,name:'Heckverbreiterung: Fahrer- und Beifahrerseite',category_id:1,subcategory_id:null,base_price:4327.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:11,image_url:null,is_info:false,material_cost:1442.38,labor_hours:29.5},
-    {id:12,name:'Komplexe Verkleidungselemente: zum Anschluss der Fahrerkabine, Individualanfertigung',category_id:1,subcategory_id:null,base_price:1118.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:12,image_url:null,is_info:false,material_cost:372.79,labor_hours:7.5},
-    {id:13,name:'Plissee-Rahmen: für saubere Integration bestehender Fenster (Filz oder Eiche)',category_id:1,subcategory_id:null,base_price:688.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:13,image_url:null,is_info:false,material_cost:229.59,labor_hours:4.5},
-    {id:14,name:'Seitenfenster: (Klapp- / Schiebe- / Kfz)',category_id:2,subcategory_id:null,base_price:953.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:14,image_url:null,is_info:false,material_cost:317.99,labor_hours:6.5},
-    {id:15,name:'Dachfenster: Mini Heki',category_id:2,subcategory_id:null,base_price:617.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:15,image_url:null,is_info:false,material_cost:205.99,labor_hours:4.0},
-    {id:16,name:'Dachfenster: Midi Heki',category_id:2,subcategory_id:null,base_price:893.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:16,image_url:null,is_info:false,material_cost:297.99,labor_hours:6.0},
-    {id:17,name:'Heckfenster: (Klapp- / Kfz)',category_id:2,subcategory_id:null,base_price:833.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:17,image_url:null,is_info:false,material_cost:277.99,labor_hours:5.5},
-    {id:18,name:'Effektiver Deckenventilator: MaxxFan Deluxe',category_id:2,subcategory_id:null,base_price:928.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:18,image_url:null,is_info:false,material_cost:309.59,labor_hours:6.5},
-    {id:19,name:'Außensteckdose: für Landstromanschluss',category_id:2,subcategory_id:null,base_price:189.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:19,image_url:null,is_info:false,material_cost:63.2,labor_hours:1.5},
-    {id:20,name:'Wandkamin: Truma Standheizung',category_id:2,subcategory_id:null,base_price:189.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:20,image_url:null,is_info:false,material_cost:63.2,labor_hours:1.5},
-    {id:21,name:'Drehkonsole: Fahrer- und Beifahrersitz',category_id:2,subcategory_id:null,base_price:644.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:21,image_url:null,is_info:false,material_cost:214.8,labor_hours:4.5},
-    {id:22,name:'FASP-Sitzbank',category_id:2,subcategory_id:null,base_price:3695.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:22,image_url:null,is_info:false,material_cost:1231.98,labor_hours:25.0},
-    {id:23,name:'Aguti-Sitzbank',category_id:2,subcategory_id:null,base_price:3695.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:23,image_url:null,is_info:false,material_cost:1231.98,labor_hours:25.0},
-    {id:24,name:'Schnierle-Einzelsitz',category_id:2,subcategory_id:null,base_price:1478.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:24,image_url:null,is_info:false,material_cost:492.79,labor_hours:10.0},
-    {id:25,name:'Schlafsitzbank',category_id:2,subcategory_id:null,base_price:6695.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:25,image_url:null,is_info:false,material_cost:2231.98,labor_hours:45.5},
-    {id:26,name:'Verkleidung: von Sitzbank / Einzelsitz, Individualanfertigung',category_id:2,subcategory_id:null,base_price:1437.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:26,image_url:null,is_info:false,material_cost:479.19,labor_hours:10.0},
-    {id:27,name:'Küchenmodul: in der Schiebetür',category_id:3,subcategory_id:null,base_price:5465.84,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:27,image_url:null,is_info:false,material_cost:1821.95,labor_hours:37.0},
-    {id:28,name:'Stauraummodul: mit integrierter Trelino Trenntoilette, individuell angefertigt',category_id:3,subcategory_id:null,base_price:3759.5,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:28,image_url:null,is_info:false,material_cost:1253.17,labor_hours:25.5},
-    {id:29,name:'Kleiderschrankmodul: längs neben Bett',category_id:3,subcategory_id:null,base_price:3999.5,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:29,image_url:null,is_info:false,material_cost:1333.17,labor_hours:27.0},
-    {id:30,name:'Hohes Stauraummodul: mit mehreren Staufächern',category_id:3,subcategory_id:null,base_price:4959.5,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:30,image_url:null,is_info:false,material_cost:1653.17,labor_hours:33.5},
-    {id:31,name:'Hängeschrank-Taschen: Moonbox, inkl. Befestigungssystem',category_id:3,subcategory_id:null,base_price:1667.96,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:31,image_url:null,is_info:false,material_cost:555.99,labor_hours:11.5},
-    {id:32,name:'Heck-Sitzecke mit Hubtisch: auf einer erhöhten Etage inkl. Polsterset für den Umbau in ein gemütliches, großzügiges Bett',category_id:3,subcategory_id:null,base_price:9287.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:32,image_url:null,is_info:false,material_cost:3095.93,labor_hours:63.0},
-    {id:33,name:'Berkemeier-Ess-Bereich: für zwei Personen mit flexiblem Tischsystem, absenkbar für den Umbau in eine gemütliche, durchgehende Sitzfläche',category_id:3,subcategory_id:null,base_price:4011.54,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:33,image_url:null,is_info:false,material_cost:1337.18,labor_hours:27.5},
-    {id:34,name:'Tischsystem: Lagun flexibel und robust mit Eichen-Tischplatte',category_id:3,subcategory_id:null,base_price:1238.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:34,image_url:null,is_info:false,material_cost:412.79,labor_hours:8.5},
-    {id:35,name:'Sitzbankmodul: hinter dem Fahrersitz, bequem und strapazierfähig gepolstert',category_id:3,subcategory_id:null,base_price:3335.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:35,image_url:null,is_info:false,material_cost:1111.98,labor_hours:22.5},
-    {id:36,name:'Hängeschrank: mit 1 offenem Fach über der Schiebetür',category_id:3,subcategory_id:null,base_price:2091.54,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:36,image_url:null,is_info:false,material_cost:697.18,labor_hours:14.0},
-    {id:37,name:'Hängeschrank: mit 2-3 offenen Fächern über der Schiebetür',category_id:3,subcategory_id:null,base_price:3715.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:37,image_url:null,is_info:false,material_cost:1238.37,labor_hours:25.5},
-    {id:38,name:'Hängeschrank: mit 1 Klappe',category_id:3,subcategory_id:null,base_price:2211.54,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:38,image_url:null,is_info:false,material_cost:737.18,labor_hours:15.0},
-    {id:39,name:'Hängeschrank: mit 2-3 Klappen',category_id:3,subcategory_id:null,base_price:4454.3,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:39,image_url:null,is_info:false,material_cost:1484.77,labor_hours:30.5},
-    {id:40,name:'Badezimmer Slim: im Hochschrank als Vollauszug',category_id:3,subcategory_id:null,base_price:3095.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:40,image_url:null,is_info:false,material_cost:1031.98,labor_hours:21.0},
-    {id:41,name:'Nasszelle: mit Warmwasserversorgung',category_id:3,subcategory_id:null,base_price:9635.74,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:41,image_url:null,is_info:false,material_cost:3211.91,labor_hours:65.5},
-    {id:42,name:'Nasszelle: individuell eingepasst für die optimale Raumnutzung',category_id:3,subcategory_id:null,base_price:11309.73,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:42,image_url:null,is_info:false,material_cost:3769.91,labor_hours:77.0},
-    {id:43,name:'Nasszelle: mit integriertem Waschbecken',category_id:3,subcategory_id:null,base_price:11846.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:43,image_url:null,is_info:false,material_cost:3948.72,labor_hours:80.5},
-    {id:44,name:'15 L Edelstahl-Spülbecken: mit versenkbarer Armatur und Spülenabdeckung als Arbeitsplattenerweiterung',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:44,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:45,name:'15 L Spülbecken Schwarz: mit versenkbarer Armatur und Spülenabdeckung als Arbeitsplattenerweiterung',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:45,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:46,name:'Induktionskochfeld: flächenbündig eingelassen',category_id:3,subcategory_id:null,base_price:464.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:46,image_url:null,is_info:false,material_cost:154.8,labor_hours:3.0},
-    {id:47,name:'Kühlschrank: Modell X Liter für dauerhaft frische Lebensmittel',category_id:3,subcategory_id:null,base_price:1149.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:47,image_url:null,is_info:false,material_cost:383.2,labor_hours:8.0},
-    {id:48,name:'Kühlbox: Modell X Liter für dauerhaft frische Lebensmittel',category_id:3,subcategory_id:null,base_price:1099.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:48,image_url:null,is_info:false,material_cost:366.4,labor_hours:7.5},
-    {id:49,name:'Steckdosen und Lichtschalter: sauber ins Küchenmodul integriert',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:49,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:50,name:'Besteckkasten: im Küchenmodul',category_id:3,subcategory_id:null,base_price:154.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:50,image_url:null,is_info:false,material_cost:51.6,labor_hours:1.0},
-    {id:51,name:'Mülltrennsystem: im Küchenmodul',category_id:3,subcategory_id:null,base_price:119.4,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:51,image_url:null,is_info:false,material_cost:39.8,labor_hours:1.0},
-    {id:52,name:'Klapptisch: in der Schiebetür',category_id:3,subcategory_id:null,base_price:464.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:52,image_url:null,is_info:false,material_cost:154.8,labor_hours:3.0},
-    {id:53,name:'Blumenkasten: praktisches Fach als Bettabschluss zu den Hecktüren',category_id:3,subcategory_id:null,base_price:713.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:53,image_url:null,is_info:false,material_cost:237.99,labor_hours:5.0},
-    {id:54,name:'Gemütliches Querbett: inkl. Matratze mit Komfort-Einstieg',category_id:3,subcategory_id:null,base_price:8339.82,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:54,image_url:null,is_info:false,material_cost:2779.94,labor_hours:56.5},
-    {id:55,name:'Gemütliches Längsbett: inkl. Matratze mit Komfort-Einstieg',category_id:3,subcategory_id:null,base_price:9413.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:55,image_url:null,is_info:false,material_cost:3137.93,labor_hours:64.0},
-    {id:56,name:'Technik- und Sanitärversorgung: im Heck mit ausreichend Revisionsklappen',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:56,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:57,name:'Stauraum: im Heck in freien Bereichen der Technik-Schränke',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:57,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:58,name:'Schwerlastauszug: im Heck',category_id:3,subcategory_id:null,base_price:1547.96,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:58,image_url:null,is_info:false,material_cost:515.99,labor_hours:10.5},
-    {id:59,name:'Fahrradauszug: für 2 Fahrräder im Heck',category_id:3,subcategory_id:null,base_price:1857.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:59,image_url:null,is_info:false,material_cost:619.19,labor_hours:12.5},
-    {id:60,name:'Heckgarage mit Zugang von Innen (= Bereich bleibt frei)',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:60,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:61,name:'Heckgarage: inkl. Hunde-Box mit Zugang aus dem Wohnraum',category_id:3,subcategory_id:null,base_price:998.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:61,image_url:null,is_info:false,material_cost:332.79,labor_hours:7.0},
-    {id:62,name:'Nasszelle: im Heck als Durchgang',category_id:3,subcategory_id:null,base_price:12509.73,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:62,image_url:null,is_info:false,material_cost:4169.91,labor_hours:85.0},
-    {id:63,name:'Außendusche: im Heck mit freier Positionierung am Fahrzeugblech',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:63,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:64,name:'Podest zwischen Sitzbank & Fahrerhaus klein',category_id:3,subcategory_id:null,base_price:928.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:64,image_url:null,is_info:false,material_cost:309.59,labor_hours:6.5},
-    {id:65,name:'Podest zwischen Sitzbank & Fahrerhaus groß',category_id:3,subcategory_id:null,base_price:1238.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:65,image_url:null,is_info:false,material_cost:412.79,labor_hours:8.5},
-    {id:66,name:'100 W Solar: auf dem Dach',category_id:4,subcategory_id:null,base_price:1178.27,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:66,image_url:null,is_info:false,material_cost:392.76,labor_hours:8.0},
-    {id:67,name:'Bordbatterie mit 100 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:2126.95,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:67,image_url:null,is_info:false,material_cost:708.98,labor_hours:14.5},
-    {id:68,name:'Landstromanschluss: via Außensteckdose',category_id:4,subcategory_id:null,base_price:1100.51,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:68,image_url:null,is_info:false,material_cost:366.84,labor_hours:7.5},
-    {id:69,name:'Dimmbare Deckenbeleuchtung: für Wohnraum und Bett, Taster an zwei Stellen zugänglich',category_id:4,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:69,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:70,name:'200 W Solar: auf dem Dach für umfassende Autarkie',category_id:4,subcategory_id:null,base_price:1538.94,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:70,image_url:null,is_info:false,material_cost:512.98,labor_hours:10.5},
-    {id:71,name:'Bordbatterie mit 200 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:3073.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:71,image_url:null,is_info:false,material_cost:1024.59,labor_hours:21.0},
-    {id:72,name:'1000 VA Wechselrichter: für eine autarke 230 V Versorgung',category_id:4,subcategory_id:null,base_price:2330.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:72,image_url:null,is_info:false,material_cost:776.8,labor_hours:16.0},
-    {id:73,name:'2x 200 W Solar: auf dem Dach für die vollumfängliche Autarkie',category_id:4,subcategory_id:null,base_price:2698.69,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:73,image_url:null,is_info:false,material_cost:899.56,labor_hours:18.5},
-    {id:74,name:'Bordbatterie mit 300 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:4106.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:74,image_url:null,is_info:false,material_cost:1368.72,labor_hours:28.0},
-    {id:75,name:'2000 VA Wechselrichter: für eine autarke 230 V Versorgung',category_id:4,subcategory_id:null,base_price:3025.29,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:75,image_url:null,is_info:false,material_cost:1008.43,labor_hours:20.5},
-    {id:76,name:'Bordbatterie mit 2x150 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:4749.72,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:76,image_url:null,is_info:false,material_cost:1583.24,labor_hours:32.5},
-    {id:77,name:'3000 VA Wechselrichter: für eine autarke 230 V Versorgung',category_id:4,subcategory_id:null,base_price:3741.95,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:77,image_url:null,is_info:false,material_cost:1247.32,labor_hours:25.5},
-    {id:78,name:'Dimmbarer Ambientebeleuchtung: unter Hängeschränken',category_id:4,subcategory_id:null,base_price:559.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:78,image_url:null,is_info:false,material_cost:186.4,labor_hours:4.0},
-    {id:79,name:'Dimmbarer Schwanenhalsleuchten: mit USB-Ladebuchsen',category_id:4,subcategory_id:null,base_price:249.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:79,image_url:null,is_info:false,material_cost:83.2,labor_hours:1.5},
-    {id:80,name:'Gesamtmenge 230 V Steckdosen: an Küchenblock und XY',category_id:4,subcategory_id:null,base_price:225.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:80,image_url:null,is_info:false,material_cost:75.2,labor_hours:1.5},
-    {id:81,name:'Gesamtmenge Fast-Charge-Steckdose: USB und USB-C Converter',category_id:4,subcategory_id:null,base_price:309.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:81,image_url:null,is_info:false,material_cost:103.2,labor_hours:2.0},
-    {id:82,name:'Victron GX Touch: 7-Zoll-Bedien-Display zur Steuerung und Überwachung des Verbrauchs, des Ladeverhaltens und der Tankfüllstände',category_id:4,subcategory_id:null,base_price:1528.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:82,image_url:null,is_info:false,material_cost:509.59,labor_hours:10.5},
-    {id:83,name:'Kabel ziehen',category_id:4,subcategory_id:null,base_price:878.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:83,image_url:null,is_info:false,material_cost:292.79,labor_hours:6.0},
-    {id:84,name:'Feininstallation',category_id:4,subcategory_id:null,base_price:473.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:84,image_url:null,is_info:false,material_cost:157.99,labor_hours:3.0},
-    {id:85,name:'70 L Frischwassersystem: inkl. Pumpe und digitaler Füllstandsanzeige',category_id:5,subcategory_id:null,base_price:2306.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:85,image_url:null,is_info:false,material_cost:768.78,labor_hours:15.5},
-    {id:86,name:'100 L Frischwasser: inkl. Pumpe und digitaler Füllstandsanzeige',category_id:5,subcategory_id:null,base_price:3235.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:86,image_url:null,is_info:false,material_cost:1078.37,labor_hours:22.0},
-    {id:87,name:'50 L Abwassertank: mit elektrischer Entleerung, digitaler Füllstandsanzeige und winterfester Isolierung',category_id:5,subcategory_id:null,base_price:1358.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:87,image_url:null,is_info:false,material_cost:452.79,labor_hours:9.0},
-    {id:88,name:'Warmwasserversorgung und Luftstandheizung: Truma 4D',category_id:5,subcategory_id:null,base_price:6671.85,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:88,image_url:null,is_info:false,material_cost:2223.95,labor_hours:45.5},
-    {id:89,name:'Warmwasserversorgung und Luftstandheizung: Truma 4D betrieben mit Solarenergie, 230 V System oder im Dieselbetrieb',category_id:5,subcategory_id:null,base_price:7101.45,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:89,image_url:null,is_info:false,material_cost:2367.15,labor_hours:48.5},
-    {id:90,name:'Warmwasserversorgung: dank Autoterm CombiBoil 9L im 230 V-Betrieb',category_id:5,subcategory_id:null,base_price:3095.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:90,image_url:null,is_info:false,material_cost:1031.98,labor_hours:21.0},
-    {id:91,name:'Luftstandheizung: Autoterm Air 2D im 12 V-Betrieb',category_id:5,subcategory_id:null,base_price:2287.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:91,image_url:null,is_info:false,material_cost:762.38,labor_hours:15.5},
-    {id:92,name:'Im Heck integrierte Außendusche: Queensize Camper Duscharmatur mit Warmwasser und mobiler Duschhalterung zur freien Positionierung am Fahrzeug',category_id:5,subcategory_id:null,base_price:679.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:92,image_url:null,is_info:false,material_cost:226.4,labor_hours:4.5},
-    {id:93,name:'Frischwasserbefüllung: durch Einfüllstutzen in Heckmöbeln',category_id:5,subcategory_id:null,base_price:154.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:93,image_url:null,is_info:false,material_cost:51.6,labor_hours:1.0},
-    {id:94,name:'Frischwasserbefüllung: durch Einfüllstutzen in Fahrzeugwand',category_id:5,subcategory_id:null,base_price:499.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:94,image_url:null,is_info:false,material_cost:166.4,labor_hours:3.5},
-    {id:95,name:'Wasserlose Toilette: Clesana mit hygienischer Verschweiß-Technologie',category_id:5,subcategory_id:null,base_price:878.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:95,image_url:null,is_info:false,material_cost:292.79,labor_hours:6.0},
-    {id:96,name:'Trenntoilette: Trelino Evo S/M/L',category_id:5,subcategory_id:null,base_price:799.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:96,image_url:null,is_info:false,material_cost:266.4,labor_hours:5.5},
-    {id:97,name:'Trinkwasserfilter: Alb Nano in die Frischwasserleitung integriert',category_id:5,subcategory_id:null,base_price:404.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:97,image_url:null,is_info:false,material_cost:134.8,labor_hours:3.0},
-    {id:98,name:'Elektrische Trittstufe: Thule Slide-Out Step für den sicheren Einstieg in die Schiebetür',category_id:6,subcategory_id:null,base_price:1048.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:98,image_url:null,is_info:false,material_cost:349.59,labor_hours:7.0},
-    {id:99,name:'Elektrische Trittstufe: Thule Single Step für den sicheren Einstieg in die Schiebetür',category_id:6,subcategory_id:null,base_price:1048.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:99,image_url:null,is_info:false,material_cost:349.59,labor_hours:7.0},
-    {id:100,name:'Elektrische Schwenk-Trittstufe: 4x4 Alpha Dynamic für den sicheren Einstieg in die Schiebetür',category_id:6,subcategory_id:null,base_price:2457.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:100,image_url:null,is_info:false,material_cost:819.19,labor_hours:16.5},
-    {id:101,name:'Markise: Produktname zur bequemen Verschattung des Bereichs vor der Schiebetür',category_id:6,subcategory_id:null,base_price:2198.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:101,image_url:null,is_info:false,material_cost:732.79,labor_hours:15.0},
-    {id:102,name:'Dachträger: Roocon Roof Constructions XY zur Befestigung der Solarpaneele und als zusätzlicher Stauraum auf dem Dach',category_id:6,subcategory_id:null,base_price:4137.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:102,image_url:null,is_info:false,material_cost:1379.19,labor_hours:28.0},
-    {id:103,name:'Aufstelldach: Campany Highend Roof als Dachschlafplatz mit Panoramablick',category_id:6,subcategory_id:null,base_price:14212.67,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:103,image_url:null,is_info:false,material_cost:4737.56,labor_hours:96.5},
-    {id:104,name:'Fahrradträger: Pushrack zum Transport der Räder an den Heckklappen, einseitig mit 2 Haltern',category_id:6,subcategory_id:null,base_price:1013.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:104,image_url:null,is_info:false,material_cost:337.99,labor_hours:7.0},
-    {id:105,name:'Fahrradträger: Produktname zum Transport der Räder in der Heckgarage',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:105,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:106,name:'Ready-to-Camp-Paket: 2 Stühle und 1 Tisch mit fixem Platz im Fahrzeug, Wasserkonservierung und Landstrom-Kabel',category_id:6,subcategory_id:null,base_price:988.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:106,image_url:null,is_info:false,material_cost:329.59,labor_hours:6.5},
-    {id:107,name:'Safety-Paket: mit Brandmelder, CO-Melder und Feuerlöscher',category_id:6,subcategory_id:null,base_price:154.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:107,image_url:null,is_info:false,material_cost:51.6,labor_hours:1.0},
-    {id:108,name:'Integration des Aufstelldach-Durchstiegs: in die Deckenverkleidung',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:108,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:109,name:'Leiterlösung: für den Aufstieg zur zweiten Etage',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:109,image_url:null,is_info:true,material_cost:0.0,labor_hours:0},
-    {id:110,name:'Sicherheitssystem: Bearlock für dein Fahrzeug',category_id:6,subcategory_id:null,base_price:1459.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:110,image_url:null,is_info:false,material_cost:486.4,labor_hours:10.0},
-    {id:111,name:'Außenbeleuchtung über der Schiebetür',category_id:6,subcategory_id:null,base_price:1058.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:111,image_url:null,is_info:false,material_cost:352.79,labor_hours:7.0},
-    {id:112,name:'Fliegengitter in der Schiebetür',category_id:6,subcategory_id:null,base_price:1358.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:112,image_url:null,is_info:false,material_cost:452.79,labor_hours:9.0},
-    {id:113,name:'Sonstiges',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:113,image_url:null,is_info:false,material_cost:0.0,labor_hours:0}
+    {id:1,name:'Geräusch- und Temperatur-Isolation: Armaflex / Vanue 19 mm / 3 mm / 19 + 3 mm',category_id:1,subcategory_id:null,base_price:2546.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:1,image_url:null,is_info:false,material_cost:713.26,labor_hours:17.5},
+    {id:2,name:'Unterkonstruktion: sicher und verkehrstauglich (Boden UK, Wand UK, Nietmuttern)',category_id:1,subcategory_id:null,base_price:5099.82,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:2,image_url:null,is_info:false,material_cost:1428.52,labor_hours:34.5},
+    {id:3,name:'Gefilzte Wandpaneele: für eine angenehme Raumakustik, Individualanfertigung',category_id:1,subcategory_id:null,base_price:3194.3,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:3,image_url:null,is_info:false,material_cost:894.76,labor_hours:21.5},
+    {id:4,name:'Akustikdecke Eiche: mit dimmbarer LED-Beleuchtung',category_id:1,subcategory_id:null,base_price:2306.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:4,image_url:null,is_info:false,material_cost:646.03,labor_hours:15.5},
+    {id:5,name:'Akustikdecke Eiche: mit dimmbarer LED-Beleuchtung und integrierter Dachluke / MaxxFan',category_id:1,subcategory_id:null,base_price:2875.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:5,image_url:null,is_info:false,material_cost:805.35,labor_hours:19.5},
+    {id:6,name:'Leichtbaudecke Hell: mit dimmbarer LED-Beleuchtung',category_id:1,subcategory_id:null,base_price:2066.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:6,image_url:null,is_info:false,material_cost:578.81,labor_hours:14.0},
+    {id:7,name:'Leichtbaudecke Hell: mit dimmbarer LED-Beleuchtung und integrierter Dachluke / MaxxFan',category_id:1,subcategory_id:null,base_price:2635.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:7,image_url:null,is_info:false,material_cost:738.13,labor_hours:18.0},
+    {id:8,name:'Bodenplatte: mit gemütlichem Linoleum-Belag',category_id:1,subcategory_id:null,base_price:2995.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:8,image_url:null,is_info:false,material_cost:838.97,labor_hours:20.5},
+    {id:9,name:'Bodenplatte: mit robustem Eiche-Vinyl-Belag',category_id:1,subcategory_id:null,base_price:3374.3,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:9,image_url:null,is_info:false,material_cost:945.18,labor_hours:23.0},
+    {id:10,name:'Bodenplatte: mit gemütlichem Linoleum-Belag / robustem Eiche-Vinyl-Belag und Teppich im Heck',category_id:1,subcategory_id:null,base_price:2995.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:10,image_url:null,is_info:false,material_cost:838.97,labor_hours:20.5},
+    {id:11,name:'Heckverbreiterung: Fahrer- und Beifahrerseite',category_id:1,subcategory_id:null,base_price:4327.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:11,image_url:null,is_info:false,material_cost:1212.08,labor_hours:29.5},
+    {id:12,name:'Komplexe Verkleidungselemente: zum Anschluss der Fahrerkabine, Individualanfertigung',category_id:1,subcategory_id:null,base_price:1118.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:12,image_url:null,is_info:false,material_cost:313.27,labor_hours:7.5},
+    {id:13,name:'Plissee-Rahmen: für saubere Integration bestehender Fenster (Filz oder Eiche)',category_id:1,subcategory_id:null,base_price:688.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:13,image_url:null,is_info:false,material_cost:192.93,labor_hours:4.5},
+    {id:14,name:'Seitenfenster: (Klapp- / Schiebe- / Kfz)',category_id:2,subcategory_id:null,base_price:953.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:14,image_url:null,is_info:false,material_cost:267.22,labor_hours:6.5},
+    {id:15,name:'Dachfenster: Mini Heki',category_id:2,subcategory_id:null,base_price:617.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:15,image_url:null,is_info:false,material_cost:173.10,labor_hours:4.0},
+    {id:16,name:'Dachfenster: Midi Heki',category_id:2,subcategory_id:null,base_price:893.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:16,image_url:null,is_info:false,material_cost:250.41,labor_hours:6.0},
+    {id:17,name:'Heckfenster: (Klapp- / Kfz)',category_id:2,subcategory_id:null,base_price:833.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:17,image_url:null,is_info:false,material_cost:233.61,labor_hours:5.5},
+    {id:18,name:'Effektiver Deckenventilator: MaxxFan Deluxe',category_id:2,subcategory_id:null,base_price:928.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:18,image_url:null,is_info:false,material_cost:260.16,labor_hours:6.5},
+    {id:19,name:'Außensteckdose: für Landstromanschluss',category_id:2,subcategory_id:null,base_price:189.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:19,image_url:null,is_info:false,material_cost:53.11,labor_hours:1.5},
+    {id:20,name:'Wandkamin: Truma Standheizung',category_id:2,subcategory_id:null,base_price:189.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:20,image_url:null,is_info:false,material_cost:53.11,labor_hours:1.5},
+    {id:21,name:'Drehkonsole: Fahrer- und Beifahrersitz',category_id:2,subcategory_id:null,base_price:644.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:21,image_url:null,is_info:false,material_cost:180.50,labor_hours:4.5},
+    {id:22,name:'FASP-Sitzbank',category_id:2,subcategory_id:null,base_price:3695.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:22,image_url:null,is_info:false,material_cost:1035.28,labor_hours:25.0},
+    {id:23,name:'Aguti-Sitzbank',category_id:2,subcategory_id:null,base_price:3695.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:23,image_url:null,is_info:false,material_cost:1035.28,labor_hours:25.0},
+    {id:24,name:'Schnierle-Einzelsitz',category_id:2,subcategory_id:null,base_price:1478.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:24,image_url:null,is_info:false,material_cost:414.11,labor_hours:10.0},
+    {id:25,name:'Schlafsitzbank',category_id:2,subcategory_id:null,base_price:6695.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:25,image_url:null,is_info:false,material_cost:1875.61,labor_hours:45.5},
+    {id:26,name:'Verkleidung: von Sitzbank / Einzelsitz, Individualanfertigung',category_id:2,subcategory_id:null,base_price:1437.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:26,image_url:null,is_info:false,material_cost:402.68,labor_hours:10.0},
+    {id:27,name:'Küchenmodul: in der Schiebetür',category_id:3,subcategory_id:null,base_price:5465.84,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:27,image_url:null,is_info:false,material_cost:1531.05,labor_hours:37.0},
+    {id:28,name:'Stauraummodul: mit integrierter Trelino Trenntoilette, individuell angefertigt',category_id:3,subcategory_id:null,base_price:3759.5,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:28,image_url:null,is_info:false,material_cost:1053.08,labor_hours:25.5},
+    {id:29,name:'Kleiderschrankmodul: längs neben Bett',category_id:3,subcategory_id:null,base_price:3999.5,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:29,image_url:null,is_info:false,material_cost:1120.31,labor_hours:27.0},
+    {id:30,name:'Hohes Stauraummodul: mit mehreren Staufächern',category_id:3,subcategory_id:null,base_price:4959.5,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:30,image_url:null,is_info:false,material_cost:1389.22,labor_hours:33.5},
+    {id:31,name:'Hängeschrank-Taschen: Moonbox, inkl. Befestigungssystem',category_id:3,subcategory_id:null,base_price:1667.96,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:31,image_url:null,is_info:false,material_cost:467.22,labor_hours:11.5},
+    {id:32,name:'Heck-Sitzecke mit Hubtisch: auf einer erhöhten Etage inkl. Polsterset für den Umbau in ein gemütliches, großzügiges Bett',category_id:3,subcategory_id:null,base_price:9287.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:32,image_url:null,is_info:false,material_cost:2601.62,labor_hours:63.0},
+    {id:33,name:'Berkemeier-Ess-Bereich: für zwei Personen mit flexiblem Tischsystem, absenkbar für den Umbau in eine gemütliche, durchgehende Sitzfläche',category_id:3,subcategory_id:null,base_price:4011.54,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:33,image_url:null,is_info:false,material_cost:1123.68,labor_hours:27.5},
+    {id:34,name:'Tischsystem: Lagun flexibel und robust mit Eichen-Tischplatte',category_id:3,subcategory_id:null,base_price:1238.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:34,image_url:null,is_info:false,material_cost:346.88,labor_hours:8.5},
+    {id:35,name:'Sitzbankmodul: hinter dem Fahrersitz, bequem und strapazierfähig gepolstert',category_id:3,subcategory_id:null,base_price:3335.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:35,image_url:null,is_info:false,material_cost:934.44,labor_hours:22.5},
+    {id:36,name:'Hängeschrank: mit 1 offenem Fach über der Schiebetür',category_id:3,subcategory_id:null,base_price:2091.54,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:36,image_url:null,is_info:false,material_cost:585.87,labor_hours:14.0},
+    {id:37,name:'Hängeschrank: mit 2-3 offenen Fächern über der Schiebetür',category_id:3,subcategory_id:null,base_price:3715.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:37,image_url:null,is_info:false,material_cost:1040.65,labor_hours:25.5},
+    {id:38,name:'Hängeschrank: mit 1 Klappe',category_id:3,subcategory_id:null,base_price:2211.54,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:38,image_url:null,is_info:false,material_cost:619.48,labor_hours:15.0},
+    {id:39,name:'Hängeschrank: mit 2-3 Klappen',category_id:3,subcategory_id:null,base_price:4454.3,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:39,image_url:null,is_info:false,material_cost:1247.71,labor_hours:30.5},
+    {id:40,name:'Badezimmer Slim: im Hochschrank als Vollauszug',category_id:3,subcategory_id:null,base_price:3095.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:40,image_url:null,is_info:false,material_cost:867.21,labor_hours:21.0},
+    {id:41,name:'Nasszelle: mit Warmwasserversorgung',category_id:3,subcategory_id:null,base_price:9635.74,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:41,image_url:null,is_info:false,material_cost:2699.08,labor_hours:65.5},
+    {id:42,name:'Nasszelle: individuell eingepasst für die optimale Raumnutzung',category_id:3,subcategory_id:null,base_price:11309.73,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:42,image_url:null,is_info:false,material_cost:3167.99,labor_hours:77.0},
+    {id:43,name:'Nasszelle: mit integriertem Waschbecken',category_id:3,subcategory_id:null,base_price:11846.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:43,image_url:null,is_info:false,material_cost:3318.25,labor_hours:80.5},
+    {id:44,name:'15 L Edelstahl-Spülbecken: mit versenkbarer Armatur und Spülenabdeckung als Arbeitsplattenerweiterung',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:44,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:45,name:'15 L Spülbecken Schwarz: mit versenkbarer Armatur und Spülenabdeckung als Arbeitsplattenerweiterung',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:45,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:46,name:'Induktionskochfeld: flächenbündig eingelassen',category_id:3,subcategory_id:null,base_price:464.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:46,image_url:null,is_info:false,material_cost:130.08,labor_hours:3.0},
+    {id:47,name:'Kühlschrank: Modell X Liter für dauerhaft frische Lebensmittel',category_id:3,subcategory_id:null,base_price:1149.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:47,image_url:null,is_info:false,material_cost:322.02,labor_hours:8.0},
+    {id:48,name:'Kühlbox: Modell X Liter für dauerhaft frische Lebensmittel',category_id:3,subcategory_id:null,base_price:1099.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:48,image_url:null,is_info:false,material_cost:307.90,labor_hours:7.5},
+    {id:49,name:'Steckdosen und Lichtschalter: sauber ins Küchenmodul integriert',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:49,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:50,name:'Besteckkasten: im Küchenmodul',category_id:3,subcategory_id:null,base_price:154.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:50,image_url:null,is_info:false,material_cost:43.36,labor_hours:1.0},
+    {id:51,name:'Mülltrennsystem: im Küchenmodul',category_id:3,subcategory_id:null,base_price:119.4,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:51,image_url:null,is_info:false,material_cost:33.45,labor_hours:1.0},
+    {id:52,name:'Klapptisch: in der Schiebetür',category_id:3,subcategory_id:null,base_price:464.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:52,image_url:null,is_info:false,material_cost:130.08,labor_hours:3.0},
+    {id:53,name:'Blumenkasten: praktisches Fach als Bettabschluss zu den Hecktüren',category_id:3,subcategory_id:null,base_price:713.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:53,image_url:null,is_info:false,material_cost:199.99,labor_hours:5.0},
+    {id:54,name:'Gemütliches Querbett: inkl. Matratze mit Komfort-Einstieg',category_id:3,subcategory_id:null,base_price:8339.82,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:54,image_url:null,is_info:false,material_cost:2336.08,labor_hours:56.5},
+    {id:55,name:'Gemütliches Längsbett: inkl. Matratze mit Komfort-Einstieg',category_id:3,subcategory_id:null,base_price:9413.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:55,image_url:null,is_info:false,material_cost:2636.92,labor_hours:64.0},
+    {id:56,name:'Technik- und Sanitärversorgung: im Heck mit ausreichend Revisionsklappen',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:56,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:57,name:'Stauraum: im Heck in freien Bereichen der Technik-Schränke',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:57,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:58,name:'Schwerlastauszug: im Heck',category_id:3,subcategory_id:null,base_price:1547.96,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:58,image_url:null,is_info:false,material_cost:433.61,labor_hours:10.5},
+    {id:59,name:'Fahrradauszug: für 2 Fahrräder im Heck',category_id:3,subcategory_id:null,base_price:1857.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:59,image_url:null,is_info:false,material_cost:520.33,labor_hours:12.5},
+    {id:60,name:'Heckgarage mit Zugang von Innen (= Bereich bleibt frei)',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:60,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:61,name:'Heckgarage: inkl. Hunde-Box mit Zugang aus dem Wohnraum',category_id:3,subcategory_id:null,base_price:998.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:61,image_url:null,is_info:false,material_cost:279.66,labor_hours:7.0},
+    {id:62,name:'Nasszelle: im Heck als Durchgang',category_id:3,subcategory_id:null,base_price:12509.73,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:62,image_url:null,is_info:false,material_cost:3504.13,labor_hours:85.0},
+    {id:63,name:'Außendusche: im Heck mit freier Positionierung am Fahrzeugblech',category_id:3,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:63,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:64,name:'Podest zwischen Sitzbank & Fahrerhaus klein',category_id:3,subcategory_id:null,base_price:928.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:64,image_url:null,is_info:false,material_cost:260.16,labor_hours:6.5},
+    {id:65,name:'Podest zwischen Sitzbank & Fahrerhaus groß',category_id:3,subcategory_id:null,base_price:1238.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:65,image_url:null,is_info:false,material_cost:346.88,labor_hours:8.5},
+    {id:66,name:'100 W Solar: auf dem Dach',category_id:4,subcategory_id:null,base_price:1178.27,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:66,image_url:null,is_info:false,material_cost:330.05,labor_hours:8.0},
+    {id:67,name:'Bordbatterie mit 100 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:2126.95,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:67,image_url:null,is_info:false,material_cost:595.78,labor_hours:14.5},
+    {id:68,name:'Landstromanschluss: via Außensteckdose',category_id:4,subcategory_id:null,base_price:1100.51,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:68,image_url:null,is_info:false,material_cost:308.27,labor_hours:7.5},
+    {id:69,name:'Dimmbare Deckenbeleuchtung: für Wohnraum und Bett, Taster an zwei Stellen zugänglich',category_id:4,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:69,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:70,name:'200 W Solar: auf dem Dach für umfassende Autarkie',category_id:4,subcategory_id:null,base_price:1538.94,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:70,image_url:null,is_info:false,material_cost:431.08,labor_hours:10.5},
+    {id:71,name:'Bordbatterie mit 200 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:3073.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:71,image_url:null,is_info:false,material_cost:861.00,labor_hours:21.0},
+    {id:72,name:'1000 VA Wechselrichter: für eine autarke 230 V Versorgung',category_id:4,subcategory_id:null,base_price:2330.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:72,image_url:null,is_info:false,material_cost:652.77,labor_hours:16.0},
+    {id:73,name:'2x 200 W Solar: auf dem Dach für die vollumfängliche Autarkie',category_id:4,subcategory_id:null,base_price:2698.69,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:73,image_url:null,is_info:false,material_cost:755.93,labor_hours:18.5},
+    {id:74,name:'Bordbatterie mit 300 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:4106.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:74,image_url:null,is_info:false,material_cost:1150.18,labor_hours:28.0},
+    {id:75,name:'2000 VA Wechselrichter: für eine autarke 230 V Versorgung',category_id:4,subcategory_id:null,base_price:3025.29,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:75,image_url:null,is_info:false,material_cost:847.42,labor_hours:20.5},
+    {id:76,name:'Bordbatterie mit 2x150 Ah: Lithium-Batterie mit Batterie-Management-System',category_id:4,subcategory_id:null,base_price:4749.72,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:76,image_url:null,is_info:false,material_cost:1330.45,labor_hours:32.5},
+    {id:77,name:'3000 VA Wechselrichter: für eine autarke 230 V Versorgung',category_id:4,subcategory_id:null,base_price:3741.95,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:77,image_url:null,is_info:false,material_cost:1048.17,labor_hours:25.5},
+    {id:78,name:'Dimmbarer Ambientebeleuchtung: unter Hängeschränken',category_id:4,subcategory_id:null,base_price:559.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:78,image_url:null,is_info:false,material_cost:156.64,labor_hours:4.0},
+    {id:79,name:'Dimmbarer Schwanenhalsleuchten: mit USB-Ladebuchsen',category_id:4,subcategory_id:null,base_price:249.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:79,image_url:null,is_info:false,material_cost:69.92,labor_hours:1.5},
+    {id:80,name:'Gesamtmenge 230 V Steckdosen: an Küchenblock und XY',category_id:4,subcategory_id:null,base_price:225.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:80,image_url:null,is_info:false,material_cost:63.19,labor_hours:1.5},
+    {id:81,name:'Gesamtmenge Fast-Charge-Steckdose: USB und USB-C Converter',category_id:4,subcategory_id:null,base_price:309.59,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:81,image_url:null,is_info:false,material_cost:86.72,labor_hours:2.0},
+    {id:82,name:'Victron GX Touch: 7-Zoll-Bedien-Display zur Steuerung und Überwachung des Verbrauchs, des Ladeverhaltens und der Tankfüllstände',category_id:4,subcategory_id:null,base_price:1528.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:82,image_url:null,is_info:false,material_cost:428.23,labor_hours:10.5},
+    {id:83,name:'Kabel ziehen',category_id:4,subcategory_id:null,base_price:878.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:83,image_url:null,is_info:false,material_cost:246.04,labor_hours:6.0},
+    {id:84,name:'Feininstallation',category_id:4,subcategory_id:null,base_price:473.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:84,image_url:null,is_info:false,material_cost:132.76,labor_hours:3.0},
+    {id:85,name:'70 L Frischwassersystem: inkl. Pumpe und digitaler Füllstandsanzeige',category_id:5,subcategory_id:null,base_price:2306.33,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:85,image_url:null,is_info:false,material_cost:646.03,labor_hours:15.5},
+    {id:86,name:'100 L Frischwasser: inkl. Pumpe und digitaler Füllstandsanzeige',category_id:5,subcategory_id:null,base_price:3235.11,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:86,image_url:null,is_info:false,material_cost:906.19,labor_hours:22.0},
+    {id:87,name:'50 L Abwassertank: mit elektrischer Entleerung, digitaler Füllstandsanzeige und winterfester Isolierung',category_id:5,subcategory_id:null,base_price:1358.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:87,image_url:null,is_info:false,material_cost:380.50,labor_hours:9.0},
+    {id:88,name:'Warmwasserversorgung und Luftstandheizung: Truma 4D',category_id:5,subcategory_id:null,base_price:6671.85,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:88,image_url:null,is_info:false,material_cost:1868.87,labor_hours:45.5},
+    {id:89,name:'Warmwasserversorgung und Luftstandheizung: Truma 4D betrieben mit Solarenergie, 230 V System oder im Dieselbetrieb',category_id:5,subcategory_id:null,base_price:7101.45,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:89,image_url:null,is_info:false,material_cost:1989.20,labor_hours:48.5},
+    {id:90,name:'Warmwasserversorgung: dank Autoterm CombiBoil 9L im 230 V-Betrieb',category_id:5,subcategory_id:null,base_price:3095.93,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:90,image_url:null,is_info:false,material_cost:867.21,labor_hours:21.0},
+    {id:91,name:'Luftstandheizung: Autoterm Air 2D im 12 V-Betrieb',category_id:5,subcategory_id:null,base_price:2287.15,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:91,image_url:null,is_info:false,material_cost:640.66,labor_hours:15.5},
+    {id:92,name:'Im Heck integrierte Außendusche: Queensize Camper Duscharmatur mit Warmwasser und mobiler Duschhalterung zur freien Positionierung am Fahrzeug',category_id:5,subcategory_id:null,base_price:679.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:92,image_url:null,is_info:false,material_cost:190.25,labor_hours:4.5},
+    {id:93,name:'Frischwasserbefüllung: durch Einfüllstutzen in Heckmöbeln',category_id:5,subcategory_id:null,base_price:154.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:93,image_url:null,is_info:false,material_cost:43.36,labor_hours:1.0},
+    {id:94,name:'Frischwasserbefüllung: durch Einfüllstutzen in Fahrzeugwand',category_id:5,subcategory_id:null,base_price:499.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:94,image_url:null,is_info:false,material_cost:139.83,labor_hours:3.5},
+    {id:95,name:'Wasserlose Toilette: Clesana mit hygienischer Verschweiß-Technologie',category_id:5,subcategory_id:null,base_price:878.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:95,image_url:null,is_info:false,material_cost:246.04,labor_hours:6.0},
+    {id:96,name:'Trenntoilette: Trelino Evo S/M/L',category_id:5,subcategory_id:null,base_price:799.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:96,image_url:null,is_info:false,material_cost:223.87,labor_hours:5.5},
+    {id:97,name:'Trinkwasserfilter: Alb Nano in die Frischwasserleitung integriert',category_id:5,subcategory_id:null,base_price:404.39,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:97,image_url:null,is_info:false,material_cost:113.28,labor_hours:3.0},
+    {id:98,name:'Elektrische Trittstufe: Thule Slide-Out Step für den sicheren Einstieg in die Schiebetür',category_id:6,subcategory_id:null,base_price:1048.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:98,image_url:null,is_info:false,material_cost:293.77,labor_hours:7.0},
+    {id:99,name:'Elektrische Trittstufe: Thule Single Step für den sicheren Einstieg in die Schiebetür',category_id:6,subcategory_id:null,base_price:1048.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:99,image_url:null,is_info:false,material_cost:293.77,labor_hours:7.0},
+    {id:100,name:'Elektrische Schwenk-Trittstufe: 4x4 Alpha Dynamic für den sicheren Einstieg in die Schiebetür',category_id:6,subcategory_id:null,base_price:2457.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:100,image_url:null,is_info:false,material_cost:688.39,labor_hours:16.5},
+    {id:101,name:'Markise: Produktname zur bequemen Verschattung des Bereichs vor der Schiebetür',category_id:6,subcategory_id:null,base_price:2198.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:101,image_url:null,is_info:false,material_cost:615.79,labor_hours:15.0},
+    {id:102,name:'Dachträger: Roocon Roof Constructions XY zur Befestigung der Solarpaneele und als zusätzlicher Stauraum auf dem Dach',category_id:6,subcategory_id:null,base_price:4137.56,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:102,image_url:null,is_info:false,material_cost:1158.98,labor_hours:28.0},
+    {id:103,name:'Aufstelldach: Campany Highend Roof als Dachschlafplatz mit Panoramablick',category_id:6,subcategory_id:null,base_price:14212.67,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:103,image_url:null,is_info:false,material_cost:3981.14,labor_hours:96.5},
+    {id:104,name:'Fahrradträger: Pushrack zum Transport der Räder an den Heckklappen, einseitig mit 2 Haltern',category_id:6,subcategory_id:null,base_price:1013.98,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:104,image_url:null,is_info:false,material_cost:284.03,labor_hours:7.0},
+    {id:105,name:'Fahrradträger: Produktname zum Transport der Räder in der Heckgarage',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:105,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:106,name:'Ready-to-Camp-Paket: 2 Stühle und 1 Tisch mit fixem Platz im Fahrzeug, Wasserkonservierung und Landstrom-Kabel',category_id:6,subcategory_id:null,base_price:988.78,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:106,image_url:null,is_info:false,material_cost:276.97,labor_hours:6.5},
+    {id:107,name:'Safety-Paket: mit Brandmelder, CO-Melder und Feuerlöscher',category_id:6,subcategory_id:null,base_price:154.8,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:107,image_url:null,is_info:false,material_cost:43.36,labor_hours:1.0},
+    {id:108,name:'Integration des Aufstelldach-Durchstiegs: in die Deckenverkleidung',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:108,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:109,name:'Leiterlösung: für den Aufstieg zur zweiten Etage',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:109,image_url:null,is_info:true,material_cost:0.00,labor_hours:0},
+    {id:110,name:'Sicherheitssystem: Bearlock für dein Fahrzeug',category_id:6,subcategory_id:null,base_price:1459.19,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:110,image_url:null,is_info:false,material_cost:408.74,labor_hours:10.0},
+    {id:111,name:'Außenbeleuchtung über der Schiebetür',category_id:6,subcategory_id:null,base_price:1058.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:111,image_url:null,is_info:false,material_cost:296.46,labor_hours:7.0},
+    {id:112,name:'Fliegengitter in der Schiebetür',category_id:6,subcategory_id:null,base_price:1358.37,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:112,image_url:null,is_info:false,material_cost:380.50,labor_hours:9.0},
+    {id:113,name:'Sonstiges',category_id:6,subcategory_id:null,base_price:0,description:'',applies_vehicle_factor:false,unit:'Pauschal',active:true,sort_order:113,image_url:null,is_info:false,material_cost:0.00,labor_hours:0}
   ],
   attr_groups:[
     {id:1,name:'Möbelfarbe',sort_order:1,active:true},
@@ -1315,6 +1315,8 @@ async function loadMaster(){
   S.vehicles=results[3].data.filter(function(v){return v.active});
   S.priceFactor=parseFloat(results[4])||1.0;
   db.getSetting('hourly_rate').then(function(v){S.hourlyRate=parseFloat(v)||85.0});
+  db.getSetting('material_markup').then(function(v){S.materialMarkup=parseFloat(v)||0});
+  db.getSetting('profit_margin').then(function(v){S.profitMargin=parseFloat(v)||0});
   S.attrGroups=results[5].data.filter(function(g){return g.active}).sort(function(a,b){return a.sort_order-b.sort_order});
   S.attrOptions=results[6].data.filter(function(o){return o.active}).sort(function(a,b){return a.sort_order-b.sort_order});
 }
@@ -1322,7 +1324,15 @@ async function loadMaster(){
 // ─── PRICE CALC ───────────────────────────────────────────────────────────────
 function calcItem(svc,qty,vf,pf,ov){
   if(ov!=null&&ov!=='')return parseFloat(ov);
-  return(svc.applies_vehicle_factor?svc.base_price*vf:svc.base_price)*pf*qty;
+  var price;
+  if(svc.material_cost||svc.labor_hours){
+    var mat=(svc.material_cost||0)*(1+(S.materialMarkup||0)/100)*1.19;
+    var lohn=(svc.labor_hours||0)*(S.hourlyRate||85)*1.19;
+    price=(mat+lohn)*(1+(S.profitMargin||0)/100);
+  } else {
+    price=svc.base_price;
+  }
+  return(svc.applies_vehicle_factor?price*vf:price)*pf*qty;
 }
 
 function calcAttrSurcharge(opts){
@@ -1392,7 +1402,7 @@ async function checkBallReset(configs){
       if(daysSince>=7&&!hasUpcoming){
         c.ball_at='uns';
         c.ball_since=today;
-        db.update('configurations',c.id,{ball_at:'uns',ball_since:today}).catch(function(){});
+        db.update('configurations',c.id,{ball_at:'uns',ball_since:today}).catch(function(e){console.error('DB update error',e)});
       }
     }
   });
@@ -2267,7 +2277,7 @@ function setSvcField(svcId,field,val){
   if(!svc)return;
   svc[field]=parseFloat(val)||0;
   var u={};u[field]=svc[field];
-  db.update('services',svcId,u).catch(function(){});
+  db.update('services',svcId,u).catch(function(e){console.error('DB update error',e)});
 }
 function setItemPct(itemId,type,pct,svcId){
   var item=S.items.find(function(i){return i.id===itemId});
@@ -2285,7 +2295,7 @@ function setItemPct(itemId,type,pct,svcId){
     item.labor_hours=Math.round(defH*p/100*10)/10;
     var u={labor_pct:p,labor_hours:item.labor_hours};
   }
-  db.update('config_items',itemId,u).catch(function(){});
+  db.update('config_items',itemId,u).catch(function(e){console.error('DB update error',e)});
   renderPositionen();
 }
 function updatePctLabel(slider,itemId,type,svcId){
@@ -2304,7 +2314,7 @@ function setItemField(itemId,field,val){
   if(!item)return;
   item[field]=parseFloat(val)||0;
   var u={};u[field]=item[field];
-  db.update('config_items',itemId,u).catch(function(){});
+  db.update('config_items',itemId,u).catch(function(e){console.error('DB update error',e)});
 }
 async function setOverride(itemId,val){
   var v=val===''?null:parseFloat(val);
@@ -2986,56 +2996,28 @@ async function renderABody(){
       +'</div>';
     return;
   }
-  if(S.adminTab==='import'){
-    el.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:16px">Leistungen exportieren & importieren</div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
-      +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px">'
-      +'<div style="font-size:13px;font-weight:600;margin-bottom:6px">Export</div>'
-      +'<p style="font-size:12px;color:var(--ink2);margin-bottom:14px;line-height:1.6">Alle Leistungen als Excel exportieren. Felder bearbeiten, dann wieder importieren.</p>'
-      +'<button class="btn btn-primary" onclick="exportLeistungenExcel()">Leistungen exportieren</button>'
-      +'</div>'
-      +'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px">'
-      +'<div style="font-size:13px;font-weight:600;margin-bottom:6px">Import</div>'
-      +'<p style="font-size:12px;color:var(--ink2);margin-bottom:14px;line-height:1.6">Bearbeitete Excel hochladen. Neue Kategorien, Unterkategorien und Leistungen werden automatisch angelegt. Bestehende werden aktualisiert.</p>'
-      +'<div style="border:1.5px dashed var(--border2);border-radius:8px;padding:16px;text-align:center;position:relative;cursor:pointer">'
-      +'<input type="file" accept=".xlsx" onchange="importLeistungenExcel(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>'
-      +'<div style="font-size:13px;color:var(--ink2)">Excel-Datei hierher ziehen oder klicken</div>'
-      +'<div style="font-size:11px;color:var(--ink3);margin-top:4px">.xlsx Dateien</div>'
-      +'</div>'
-      +'<div id="import-status" style="margin-top:10px;font-size:12px;color:var(--ink2)"></div>'
-      +'</div>'
-      +'</div>'
-      +'<div style="margin-top:20px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">'
-      +'<div style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:8px">Spalten in der Export-Datei</div>'
-      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;color:var(--ink3)">'
-      +'<div><strong style="color:var(--ink2)">id</strong> — interne ID (nicht ändern)</div>'
-      +'<div><strong style="color:var(--ink2)">name</strong> — Bezeichnung der Leistung</div>'
-      +'<div><strong style="color:var(--ink2)">kategorie</strong> — Kategoriename (neu = wird angelegt)</div>'
-      +'<div><strong style="color:var(--ink2)">unterkategorie</strong> — Unterkategorie (neu = wird angelegt)</div>'
-      +'<div><strong style="color:var(--ink2)">preis</strong> — Verkaufspreis in €</div>'
-      +'<div><strong style="color:var(--ink2)">material</strong> — Materialkosten in €</div>'
-      +'<div><strong style="color:var(--ink2)">stunden</strong> — Arbeitsstunden</div>'
-      +'<div><strong style="color:var(--ink2)">einheit</strong> — Pauschal / Stück / Set etc.</div>'
-      +'<div><strong style="color:var(--ink2)">fahrzeugfaktor</strong> — ja / nein</div>'
-      +'<div><strong style="color:var(--ink2)">infoposition</strong> — ja / nein</div>'
-      +'<div><strong style="color:var(--ink2)">aktiv</strong> — ja / nein</div>'
-      +'<div><strong style="color:var(--ink2)">reihenfolge</strong> — Sortierung</div>'
-      +'</div></div>';
-    return;
-  }
   if(S.adminTab==='set'){
     var pf=await db.getSetting('price_adjustment_factor');
     var hr=await db.getSetting('hourly_rate');
-    el.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:10px">Globaler Preisanpassungsfaktor</div>'
-      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.6">1.05 = alle Preise +5%. Für Kunden nicht sichtbar.</p>'
-      +'<div style="display:flex;gap:8px"><input type="number" step="0.01" id="pf-in" value="'+(pf||'1.00')+'" class="f-input" style="width:120px"/>'
-      +'<button class="btn btn-primary" onclick="savePF()">Speichern</button></div>'
-    +'<div style="margin-top:24px;font-size:15px;font-weight:700;margin-bottom:8px">Stundensatz</div>'
-    +'<p style="font-size:13px;color:var(--ink2);margin-bottom:12px">Interne Kalkulation, nicht sichtbar für Kunden.</p>'
-    +'<div style="display:flex;gap:8px;align-items:center">'
-    +'<input type="number" step="1" id="hr-in" class="f-input" style="width:120px" value="'+(hr||'85')+'"/>'
-    +'<span style="font-size:13px;color:var(--ink2)">€ / Stunde</span>'
-    +'<button class="btn btn-primary" onclick="saveHR()">Speichern</button></div>';
+    var mm=await db.getSetting('material_markup');
+    var pm=await db.getSetting('profit_margin');
+    el.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:16px">Preiskalkulation</div>'
+      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Alle Preise werden berechnet aus: <strong>Material netto</strong> \u00d7 (1 + Materialzuschlag) \u00d7 1,19 MwSt + <strong>Stunden</strong> \u00d7 Stundensatz \u00d7 1,19 MwSt + Wagnis & Gewinn.</p>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">'
+      +'<div><label class="f-label">Stundensatz (netto)</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="hr-in" class="f-input" style="width:120px" value="'+(hr||'85')+'"/><span style="font-size:12px;color:var(--ink3)">\u20ac/h</span></div></div>'
+      +'<div><label class="f-label">Materialzuschlag</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="mm-in" class="f-input" style="width:120px" value="'+(mm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">Wagnis & Gewinn</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="pm-in" class="f-input" style="width:120px" value="'+(pm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">Globaler Preisfaktor</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.01" id="pf-in" class="f-input" style="width:120px" value="'+(pf||'1.00')+'"/><span style="font-size:12px;color:var(--ink3)">\u00d7</span></div></div>'
+      +'</div>'
+      +'<button class="btn btn-primary" onclick="saveCalcSettings()" style="margin-top:16px">Alle speichern</button>'
+      +'<div id="calc-preview" style="margin-top:20px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--ink2);max-width:500px">'
+      +'<div style="font-weight:600;margin-bottom:6px">Beispielrechnung (Service 1)</div>'
+      +'<div id="calc-example"></div></div>';
+    updateCalcExample();
     return;
   }
   if(S.adminTab==='cat'){
@@ -3128,7 +3110,7 @@ async function renderABody(){
       cs.forEach(function(s){
         var thumb=s.image_url?'<img src="'+esc(s.image_url)+'" style="width:40px;height:28px;object-fit:cover;border-radius:3px" onerror="this.style.display=\'none\'">':'<div style="width:40px;height:28px;background:var(--surface3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px">'+(ICO[s.id]||'📦')+'</div>';
         html+='<div class="asvc">'+thumb
-          +'<span style="font-size:10px;color:var(--ink3);min-width:24px;text-align:right;font-variant-numeric:tabular-nums">'+s.id+'</span>'
+          +'<span style="font-size:10px;color:var(--ink3);text-align:right;font-variant-numeric:tabular-nums">'+s.id+'</span>'
           +'<div><strong style="font-size:13px">'+esc(s.name)+'</strong>'+(s.applies_vehicle_factor?'<span class="fzg" style="margin-left:4px">\u00d7Fzg</span>':'')+'<br><span style="font-size:11px;color:var(--ink3)">'+(s.subcategory_id?esc(subMap[s.subcategory_id]||'')+' &middot; ':'')+esc(s.description||'')+'</span></div>'
           +'<span style="font-size:13px;font-weight:700">'+fmt(s.base_price)+'</span>'
           +'<span class="badge '+(s.active?'b-green':'b-red')+'">'+(s.active?'Aktiv':'Inaktiv')+'</span>'
@@ -3143,6 +3125,35 @@ async function renderABody(){
 
 async function savePF(){var v=$('pf-in').value;await db.setSetting('price_adjustment_factor',v);S.priceFactor=parseFloat(v)||1.0;toast('Gespeichert')}
 async function saveHR(){var v=$('hr-in').value;await db.setSetting('hourly_rate',v);S.hourlyRate=parseFloat(v)||85.0;toast('Stundensatz gespeichert')}
+async function saveCalcSettings(){
+  var hr=$('hr-in').value;var mm=$('mm-in').value;var pm=$('pm-in').value;var pf=$('pf-in').value;
+  await Promise.all([
+    db.setSetting('hourly_rate',hr),db.setSetting('material_markup',mm),
+    db.setSetting('profit_margin',pm),db.setSetting('price_adjustment_factor',pf)
+  ]);
+  S.hourlyRate=parseFloat(hr)||85;S.materialMarkup=parseFloat(mm)||0;
+  S.profitMargin=parseFloat(pm)||0;S.priceFactor=parseFloat(pf)||1.0;
+  toast('Kalkulation gespeichert');updateCalcExample();
+}
+function updateCalcExample(){
+  var el=$('calc-example');if(!el)return;
+  var svc=DB.services.find(function(s){return s.material_cost>0});
+  if(!svc){el.innerHTML='Keine Leistung mit Materialdaten gefunden.';return}
+  var hr=parseFloat($('hr-in')?$('hr-in').value:S.hourlyRate)||85;
+  var mm=parseFloat($('mm-in')?$('mm-in').value:S.materialMarkup)||0;
+  var pm=parseFloat($('pm-in')?$('pm-in').value:S.profitMargin)||0;
+  var matNetto=svc.material_cost*(1+mm/100);
+  var matBrutto=matNetto*1.19;
+  var lohnNetto=svc.labor_hours*hr;
+  var lohnBrutto=lohnNetto*1.19;
+  var herstellkosten=matBrutto+lohnBrutto;
+  var angebot=herstellkosten*(1+pm/100);
+  el.innerHTML='<strong>'+esc(svc.name.split(':')[0])+'</strong> (ID '+svc.id+')<br>'
+    +'Material netto: '+fmt(svc.material_cost)+' \u00d7 '+(1+mm/100).toFixed(2)+' = '+fmt(matNetto)+' \u2192 brutto: '+fmt(matBrutto)+'<br>'
+    +'Lohn netto: '+svc.labor_hours+'h \u00d7 '+fmt(hr)+' = '+fmt(lohnNetto)+' \u2192 brutto: '+fmt(lohnBrutto)+'<br>'
+    +'Herstellkosten: '+fmt(herstellkosten)+'<br>'
+    +'<strong>Angebotspreis: '+fmt(angebot)+'</strong>'+(pm>0?' (inkl. '+pm+'% W&G)':'');
+}
 async function toggleA(t,id,cur){await db.update(t,id,{active:!cur});await loadMaster();renderABody()}
 
 function editCat(id){
@@ -3277,11 +3288,12 @@ function editSvc(id){
     +'<div><label class="f-label">Kategorie</label><select class="f-input" id="es-c" onchange="updateSubOpts(this.value)">'+co+'</select></div>'
     +'<div><label class="f-label">Unterkategorie</label><select class="f-input" id="es-sc"><option value="">\u2014 keine \u2014</option>'+so+'</select></div>'
     +'<div><label class="f-label">Einheit</label><select class="f-input" id="es-u">'+uo+'</select></div>'
-    +'<div><label class="f-label">Basispreis (\u20ac)</label><input class="f-input" type="number" id="es-p" value="'+(s.base_price||0)+'"/></div>'
+    +'<div><label class="f-label">Material EK netto (\u20ac)</label><input class="f-input" type="number" step="0.01" id="es-mat" value="'+(s.material_cost||'')+'" oninput="updateSvcCalcPreview()"/></div>'
+    +'<div><label class="f-label">Arbeitsstunden (h)</label><input class="f-input" type="number" step="0.5" id="es-lh" value="'+(s.labor_hours||'')+'" oninput="updateSvcCalcPreview()"/></div>'
+    +'<div class="full" id="svc-calc-hint" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--ink2)"></div>'
     +'<div><label class="f-label">Reihenfolge</label><input class="f-input" type="number" id="es-s" value="'+(s.sort_order||99)+'"/></div>'
+    +'<div><label class="f-label">Manueller Preis (\u20ac) <span style="font-weight:400;color:var(--ink3)">\u2014 \u00fcberschreibt Kalkulation</span></label><input class="f-input" type="number" id="es-p" value="'+(s.base_price||0)+'" placeholder="leer = kalkuliert"/></div>'
     +'<div class="full"><label class="f-label">Beschreibung</label><input class="f-input" id="es-d" value="'+esc(s.description||'')+'"/></div>'
-    +'<div><label class="f-label">Materialkosten Standard (€)</label><input class="f-input" type="number" step="0.01" id="es-mat" placeholder="autom. 2/3 vom Preis" value="'+(s.material_cost||'')+'"/></div>'
-    +'<div><label class="f-label">Arbeitsstunden Standard (h)</label><input class="f-input" type="number" step="0.5" id="es-lh" placeholder="autom. 1/3 vom Preis" value="'+(s.labor_hours||'')+'"/></div>'
     +'<div class="full" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="es-f"'+(s.applies_vehicle_factor?' checked':'')+' style="width:15px;height:15px"/><label for="es-f" style="font-size:13px">Fahrzeugfaktor anwenden</label></div>'
     +'<div class="full"><label class="f-label">Bild</label>'
     +'<div class="img-up"><input type="file" accept="image/*" onchange="onImgPick(event)"/><div style="font-size:12px;color:var(--ink3)">Bild ausw\u00e4hlen</div></div>'
@@ -3289,6 +3301,21 @@ function editSvc(id){
     +'</div>'
     +'<div class="modal-actions"><button class="btn" onclick="closeModal()">Abbrechen</button>'
     +'<button class="btn btn-primary" onclick="saveSvc('+(id||'null')+')">Speichern</button></div>');
+  updateSvcCalcPreview();
+}
+function updateSvcCalcPreview(){
+  var el=$('svc-calc-hint');if(!el)return;
+  var matEk=parseFloat($('es-mat')?$('es-mat').value:0)||0;
+  var hours=parseFloat($('es-lh')?$('es-lh').value:0)||0;
+  if(!matEk&&!hours){el.innerHTML='<span style="color:var(--ink3)">Material oder Stunden eingeben f\u00fcr Kalkulation</span>';return}
+  var mm=S.materialMarkup||0;var pm=S.profitMargin||0;var hr=S.hourlyRate||85;
+  var matBrutto=matEk*(1+mm/100)*1.19;
+  var lohnBrutto=hours*hr*1.19;
+  var herstellkosten=matBrutto+lohnBrutto;
+  var angebot=herstellkosten*(1+pm/100);
+  el.innerHTML='<strong>Kalkulierter Preis: '+fmt(angebot)+'</strong>'
+    +' <span style="color:var(--ink3)">(Mat. '+fmt(matBrutto)+' + Lohn '+fmt(lohnBrutto)
+    +(pm>0?' + '+pm+'% W&G':'')+')</span>';
 }
 function updateSubOpts(catId){
   var sel=$('es-sc');if(!sel)return;
