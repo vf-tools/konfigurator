@@ -961,6 +961,7 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
         <button class="btn btn-full" id="save-btn" onclick="saveConfig()">Speichern</button>
         <button class="btn btn-full" onclick="makeExcel()">Excel exportieren</button>
         <button class="btn btn-primary btn-full" onclick="makePDF()">PDF erzeugen</button>
+        <button class="btn btn-full" style="color:var(--red);margin-top:12px;border-color:var(--red)" onclick="confirmDeleteConfig()">Projekt l\u00f6schen</button>
       </div>
     </div>
     <div class="main-area">
@@ -2368,6 +2369,39 @@ async function saveConfig(){
   btn.disabled=false;btn.textContent='Speichern';_dirty=false;toast('Gespeichert \u00b7 Version '+newV);
 }
 
+function confirmDeleteConfig(){
+  var cfg=S.cfg;if(!cfg)return;
+  var a=Math.floor(Math.random()*20)+3;
+  var b=Math.floor(Math.random()*20)+3;
+  var answer=a+b;
+  openModal('Projekt endg\u00fcltig l\u00f6schen',false,
+    '<div style="text-align:center;padding:10px 0">'
+    +'<div style="font-size:14px;color:var(--ink2);margin-bottom:16px">Das Projekt <strong>'+esc(cfg.customer_name)+'</strong> wird unwiderruflich gel\u00f6scht \u2014 inkl. aller Positionen, Versionen und Aktivit\u00e4ten.</div>'
+    +'<div style="font-size:13px;color:var(--ink2);margin-bottom:12px">Zum Best\u00e4tigen l\u00f6se die Aufgabe:</div>'
+    +'<div style="font-size:28px;font-weight:700;margin-bottom:16px">'+a+' + '+b+' = ?</div>'
+    +'<input class="f-input" id="del-answer" type="number" style="width:120px;text-align:center;margin:0 auto" placeholder="?" onkeydown="if(event.key===\'Enter\')executeDeleteConfig('+answer+')">'
+    +'</div>'
+    +'<div class="modal-actions"><button class="btn" onclick="closeModal()">Abbrechen</button>'
+    +'<button class="btn" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="executeDeleteConfig('+answer+')">L\u00f6schen</button></div>');
+  setTimeout(function(){var el=$('del-answer');if(el)el.focus()},100);
+}
+async function executeDeleteConfig(correctAnswer){
+  var input=parseInt($('del-answer').value);
+  if(input!==correctAnswer){toast('Falsche Antwort \u2014 L\u00f6schung abgebrochen');return}
+  var cfg=S.cfg;if(!cfg)return;
+  showLoading();
+  // Delete all related records
+  for(var i=0;i<S.items.length;i++)await db.delete('config_items',S.items[i].id);
+  for(var i=0;i<S.configAttrs.length;i++)await db.delete('config_attrs',S.configAttrs[i].id);
+  for(var i=0;i<S.versions.length;i++)await db.delete('versions',S.versions[i].id);
+  for(var i=0;i<S.activities.length;i++)await db.delete('activities',S.activities[i].id);
+  await db.delete('configurations',cfg.id);
+  S.cfg=null;S.items=[];S.configAttrs=[];S.versions=[];S.activities=[];
+  _dirty=false;
+  closeModal();hideLoading();
+  toast('Projekt gel\u00f6scht');
+  nav('configs');
+}
 async function createVersion(){
   var note=prompt('Notiz zu diesem Snapshot:')||'Manueller Snapshot';
   var cfg=S.cfg;var newV=(cfg.version_number||1)+1;
