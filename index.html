@@ -691,6 +691,7 @@ textarea.f-input{resize:vertical;height:82px}
 
 /* ── CUSTOMER VIEW ── */
 body.cv .hide-int{display:none!important}
+body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #sb-sub,body.cv .pos-tbl td:nth-child(5),body.cv .pos-tbl th:nth-child(5),body.cv .pos-tbl tfoot{display:none!important}
 
 /* ── LIGHTBOX ── */
 #lightbox{
@@ -1891,7 +1892,7 @@ function renderUebersicht(){
     +'<div class="section-lbl" style="margin-bottom:10px">Zahlen</div>'
     +'<div style="display:flex;flex-direction:column;gap:7px">';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Leistungen</span><span style="font-weight:500">'+S.items.length+' Positionen</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Gesamtwert</span><span style="font-weight:700;font-size:15px">'+fmt(t.total)+'</span></div>';
+  html+='<div class="hide-int" style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Gesamtwert</span><span style="font-weight:700;font-size:15px">'+fmt(t.total)+'</span></div>';
   if(cfg.estimated_value&&!S.items.length)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Schätzwert</span><span style="font-weight:500">'+fmt(cfg.estimated_value)+'</span></div>';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wahrscheinlichkeit</span><span style="font-weight:500">'+(cfg.win_probability!=null?cfg.win_probability:STATUS_PROB[cfg.status]||10)+'%</span></div>';
   if(cfg.followup_date)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wiedervorlage</span><span style="font-weight:500;color:'+(cfg.followup_date<today?'var(--red)':cfg.followup_date===today?'var(--amber)':'var(--ink)')+'">'+new Date(cfg.followup_date).toLocaleDateString('de-DE')+'</span></div>';
@@ -3212,7 +3213,7 @@ function editSvc(id){
   var co=S.cats.map(function(c){return'<option value="'+c.id+'"'+(c.id==s.category_id?' selected':'')+'>'+esc(c.name)+'</option>'}).join('');
   var so=S.subcats.filter(function(sc){return sc.category_id==(s.category_id||S.cats[0].id)}).map(function(sc){return'<option value="'+sc.id+'"'+(sc.id==s.subcategory_id?' selected':'')+'>'+esc(sc.name)+'</option>'}).join('');
   var uo=['Pauschal','St\u00fcck','Set','m','m\u00b2'].map(function(u){return'<option'+(u==(s.unit||'Pauschal')?' selected':'')+'>'+u+'</option>'}).join('');
-  var imgHtml=s.image_url?'<div class="img-prev-wrap"><img src="'+esc(s.image_url)+'"/><button class="img-del" onclick="clearImg('+(id||'null')+')">×</button></div>':'';
+  var imgHtml=s.image_url?'<div class="img-prev-wrap"><img src="'+esc(s.image_url)+'"/><button class="img-del" onclick="clearImg('+(id||'null')+')">×</button></div><button class="btn btn-sm" style="margin-top:6px;font-size:11px" onclick="recropImg(\''+esc(s.image_url).replace(/'/g,"\\'")+'\')">Zuschneiden</button>':'';
   openModal(id?'Leistung bearbeiten':'Neue Leistung',true,
     '<div class="mform">'
     +'<div class="full"><label class="f-label">Name</label><input class="f-input" id="es-n" value="'+esc(s.name||'')+'"/></div>'
@@ -3255,6 +3256,18 @@ function updateSubOpts(catId){
 }
 var _cropImg=null,_cropOffX=0,_cropOffY=0,_cropDrag=false,_cropStartX=0,_cropStartY=0,_cropFile=null;
 
+function recropImg(url){
+  _cropImg=new Image();
+  _cropImg.crossOrigin='anonymous';
+  _cropImg.onload=function(){
+    // Create a fake file for the crop flow
+    var cv=document.createElement('canvas');cv.width=_cropImg.width;cv.height=_cropImg.height;
+    cv.getContext('2d').drawImage(_cropImg,0,0);
+    cv.toBlob(function(blob){_cropFile=new File([blob],'recrop.jpg',{type:'image/jpeg'});openCrop()},'image/jpeg',0.95);
+  };
+  _cropImg.onerror=function(){toast('Bild konnte nicht geladen werden')};
+  _cropImg.src=url;
+}
 function onImgPick(evt){
   var file=evt.target.files[0];if(!file)return;
   _cropFile=file;
