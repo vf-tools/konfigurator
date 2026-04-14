@@ -3065,7 +3065,7 @@ async function saveCalcSettings(){
 }
 function updateCalcExample(){
   var el=$('calc-example');if(!el)return;
-  var svc=DB.services.find(function(s){return s.material_cost>0});
+  var svc=(S.services.length?S.services:DB.services).find(function(s){return s.material_cost>0});
   if(!svc){el.innerHTML='Keine Leistung mit Materialdaten gefunden.';return}
   var hr=parseFloat($('hr-in')?$('hr-in').value:S.hourlyRate)||85;
   var mm=parseFloat($('mm-in')?$('mm-in').value:S.materialMarkup)||0;
@@ -3208,7 +3208,7 @@ async function autoSave(){
   _dirty=false;
 }
 function editSvc(id){
-  var s=id?DB.services.find(function(x){return x.id==id})||{}:{};_pi=null;
+  var s=id?(S.services.length?S.services:DB.services).find(function(x){return x.id==id})||{}:{};_pi=null;
   var co=S.cats.map(function(c){return'<option value="'+c.id+'"'+(c.id==s.category_id?' selected':'')+'>'+esc(c.name)+'</option>'}).join('');
   var so=S.subcats.filter(function(sc){return sc.category_id==(s.category_id||S.cats[0].id)}).map(function(sc){return'<option value="'+sc.id+'"'+(sc.id==s.subcategory_id?' selected':'')+'>'+esc(sc.name)+'</option>'}).join('');
   var uo=['Pauschal','St\u00fcck','Set','m','m\u00b2'].map(function(u){return'<option'+(u==(s.unit||'Pauschal')?' selected':'')+'>'+u+'</option>'}).join('');
@@ -3383,7 +3383,7 @@ function confirmCrop(){
   },'image/jpeg',0.88);
 }
 async function clearImg(svcId){
-  if(svcId){await db.update('services',svcId,{image_url:null});var s=DB.services.find(function(x){return x.id==svcId});if(s)s.image_url=null}
+  if(svcId){await db.update('services',svcId,{image_url:null});var s=(S.services.length?S.services:DB.services).find(function(x){return x.id==svcId});if(s)s.image_url=null}
   var prev=$('img-prev');if(prev)prev.innerHTML='';_pi=null;
 }
 async function saveSvc(id){
@@ -3424,7 +3424,7 @@ function bulkImgPick(fileList){
   var loaded=0;
   Array.from(fileList).forEach(function(file,idx){
     var svcId=parseId(file.name);
-    var svc=svcId?DB.services.find(function(s){return s.id===svcId}):null;
+    var svc=svcId?(S.services.length?S.services:DB.services).find(function(s){return s.id===svcId}):null;
     var entry={file:file,svcId:svcId,svc:svc,thumbUrl:null,idx:idx};
     items.push(entry);
     var rd=new FileReader();
@@ -3512,7 +3512,7 @@ async function bulkImgUpload(){
       var url=await db.uploadImage(cropped,it.svcId);
       if(url){
         await db.update('services',it.svcId,{image_url:url});
-        var s=DB.services.find(function(x){return x.id===it.svcId});
+        var s=(S.services.length?S.services:DB.services).find(function(x){return x.id===it.svcId});
         if(s)s.image_url=url;
         done++;
       } else {errors++}
