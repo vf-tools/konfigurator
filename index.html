@@ -447,7 +447,14 @@ input[type=range]::-webkit-slider-thumb{
 }
 .svc-card:hover{border-color:var(--border2);box-shadow:0 2px 12px rgba(0,0,0,.06)}
 .svc-card.sel{border:1.5px solid var(--pine);box-shadow:0 0 0 3px rgba(13,43,26,.08)}
+.svc-img-wrap{position:relative;overflow:hidden}
 .svc-img{width:100%;height:90px;object-fit:cover;display:block}
+.svc-zoom{
+  position:absolute;bottom:5px;right:5px;width:22px;height:22px;border-radius:50%;
+  background:rgba(0,0,0,.55);color:#fff;font-size:14px;line-height:22px;text-align:center;
+  cursor:pointer;opacity:0;transition:opacity .15s;backdrop-filter:blur(4px);
+}
+.svc-img-wrap:hover .svc-zoom{opacity:1}
 .svc-ph{
   width:100%;height:90px;background:var(--surface3);
   display:flex;align-items:center;justify-content:center;font-size:26px;
@@ -2167,8 +2174,8 @@ function renderSvcCard(svc,vf){
   var sel=!!item;
   var price=calcItem(svc,item?item.quantity:1,vf,S.priceFactor,item&&item.manual_override_price!=null?item.manual_override_price:null);
   var imgHtml=svc.image_url
-    ?'<img class="svc-img" src="'+esc(svc.image_url)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'+'<div class="svc-ph" style="display:none">'+(ICO[svc.id]||'📦')+'</div>'
-    :'<div class="svc-ph">'+(ICO[svc.id]||'📦')+'</div>';
+    ?'<div class="svc-img-wrap"><img class="svc-img" src="'+esc(svc.image_url)+'" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.svc-ph\').style.display=\'flex\';this.parentNode.querySelector(\'.svc-zoom\').style.display=\'none\'"><div class="svc-ph" style="display:none">'+(ICO[svc.id]||'\ud83d\udce6')+'</div><div class="svc-zoom" onclick="event.stopPropagation();openLightbox(\''+esc(svc.image_url)+'\',\''+esc(svc.name).replace(/'/g,"\\'")+'\')">+</div></div>'
+    :'<div class="svc-ph">'+(ICO[svc.id]||'\ud83d\udce6')+'</div>';
   var fzgBadge=svc.applies_vehicle_factor?'<span class="fzg hide-int" style="margin-left:4px">\u00d7Fzg</span>':'';
   var qtyHtml=sel
     ?'<div class="qty-ctrl" onclick="event.stopPropagation()">'
