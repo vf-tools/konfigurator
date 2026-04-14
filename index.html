@@ -3417,7 +3417,7 @@ function bulkImgPick(fileList){
   if(!fileList||!fileList.length){preview.innerHTML='';return}
   // Parse service ID from filename: "1.jpg", "svc-1.jpg", "27.png" etc.
   function parseId(name){
-    var m=name.match(/^(?:svc-?)?(\d+)\./i);
+    var m=name.match(/^(?:svc-?)?(\d+)/i);
     return m?parseInt(m[1]):null;
   }
   var items=[];
