@@ -2193,7 +2193,7 @@ function renderPositionen(){
     +'<tbody>'+rows+'</tbody>'
     +'<tfoot>'
     +'<tr><td colspan="2" style="font-weight:700">Gesamt Verkauf (brutto)</td><td></td><td class="hide-int"></td><td>'+fmt(t.total)+'</td><td class="hide-int" style="color:var(--ink2)">'+fmt(iMat)+'</td><td class="hide-int" style="color:var(--ink2)">'+iH.toFixed(1)+'</td><td class="hide-int"></td></tr>'
-    +'<tr class="hide-int"><td colspan="2" style="font-size:11px;color:var(--ink2)">Selbstkosten (Material-EK + Lohn netto)</td><td></td><td></td><td style="font-size:11px;font-weight:600;color:var(--amber)">'+fmt(iMat+iH*(S.hourlyRate||85))+'</td><td></td><td></td><td></td></tr>'
+    +'<tr class="hide-int"><td colspan="2" style="font-size:11px;color:var(--ink2)">Selbstkosten (Material + Lohn netto)</td><td></td><td></td><td style="font-size:11px;font-weight:600;color:var(--amber)">'+fmt(iMat+iH*(S.hourlyRate||85))+'</td><td></td><td></td><td></td></tr>'
     +'<tr class="hide-int"><td colspan="2" style="font-size:11px;font-weight:700;color:var(--green)">Deckungsbeitrag</td><td></td><td></td><td style="font-size:11px;font-weight:700;color:var(--green)">'+fmt(t.total-(iMat+iH*(S.hourlyRate||85)))+' <span style="font-weight:400;font-size:10px">('+(t.total>0?Math.round((t.total-(iMat+iH*(S.hourlyRate||85)))/t.total*100):0)+'%)</span></td><td></td><td></td><td></td></tr>'
     +'</tfoot></table>';
 }
@@ -2929,7 +2929,7 @@ async function renderABody(){
     var mm=await db.getSetting('material_markup');
     var pm=await db.getSetting('profit_margin');
     el.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:16px">Preiskalkulation</div>'
-      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Alle Preise werden berechnet aus: <strong>Material netto</strong> \u00d7 (1 + Materialzuschlag) \u00d7 1,19 MwSt + <strong>Stunden</strong> \u00d7 Stundensatz \u00d7 1,19 MwSt + Wagnis & Gewinn.</p>'
+      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Alle Preise werden berechnet aus: <strong>Materialkosten netto</strong> \u00d7 (1 + Materialzuschlag) + <strong>Stunden</strong> \u00d7 Stundensatz netto, dann \u00d7 (1 + W&G) \u00d7 1,19 MwSt.</p>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">'
       +'<div><label class="f-label">Stundensatz (netto)</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="hr-in" class="f-input" style="width:120px" value="'+(hr||'85')+'"/><span style="font-size:12px;color:var(--ink3)">\u20ac/h</span></div></div>'
@@ -3076,7 +3076,7 @@ function updateCalcExample(){
   var mitWG=nettoSumme*(1+pm/100);
   var angebot=mitWG*1.19;
   el.innerHTML='<strong>'+esc(svc.name.split(':')[0])+'</strong> (ID '+svc.id+')<br>'
-    +'Material netto: '+fmt(svc.material_cost)+' \u00d7 '+(1+mm/100).toFixed(2)+' = '+fmt(matNetto)+'<br>'
+    +'Materialkosten netto: '+fmt(svc.material_cost)+' \u00d7 '+(1+mm/100).toFixed(2)+' = '+fmt(matNetto)+'<br>'
     +'Lohn netto: '+svc.labor_hours+'h \u00d7 '+fmt(hr)+' = '+fmt(lohnNetto)+'<br>'
     +'Netto-Summe: '+fmt(nettoSumme)+(pm>0?' \u00d7 '+(1+pm/100).toFixed(2)+' (W&G) = '+fmt(mitWG):'')+'<br>'
     +'<strong>Angebotspreis (brutto): '+fmt(angebot)+'</strong>';
@@ -3219,7 +3219,7 @@ function editSvc(id){
     +'<div><label class="f-label">Kategorie</label><select class="f-input" id="es-c" onchange="updateSubOpts(this.value)">'+co+'</select></div>'
     +'<div><label class="f-label">Unterkategorie</label><select class="f-input" id="es-sc"><option value="">\u2014 keine \u2014</option>'+so+'</select></div>'
     +'<div><label class="f-label">Einheit</label><select class="f-input" id="es-u">'+uo+'</select></div>'
-    +'<div><label class="f-label">Material EK netto (\u20ac)</label><input class="f-input" type="number" step="0.01" id="es-mat" value="'+(s.material_cost||'')+'" oninput="updateSvcCalcPreview()"/></div>'
+    +'<div><label class="f-label">Materialkosten netto (\u20ac)</label><input class="f-input" type="number" step="0.01" id="es-mat" value="'+(s.material_cost||'')+'" oninput="updateSvcCalcPreview()"/></div>'
     +'<div><label class="f-label">Arbeitsstunden (h)</label><input class="f-input" type="number" step="0.5" id="es-lh" value="'+(s.labor_hours||'')+'" oninput="updateSvcCalcPreview()"/></div>'
     +'<div class="full" id="svc-calc-hint" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--ink2)"></div>'
     +'<div><label class="f-label">Reihenfolge</label><input class="f-input" type="number" id="es-s" value="'+(s.sort_order||99)+'"/></div>'
