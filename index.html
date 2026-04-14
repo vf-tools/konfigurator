@@ -1050,6 +1050,7 @@ function checkAuth(){
     document.getElementById('login-screen').classList.add('hidden');
     return true;
   }
+  document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('login-pw').focus();
   return false;
 }
@@ -3876,6 +3877,7 @@ window.addEventListener('beforeunload',function(e){if(_dirty){e.preventDefault()
 if(sessionStorage.getItem('vf_auth')==='1'){
   appStart();
 } else {
+  document.getElementById('login-screen').classList.remove('hidden');
   setTimeout(function(){document.getElementById('login-pw').focus()},100);
 }
 </script>
