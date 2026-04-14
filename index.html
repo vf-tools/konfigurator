@@ -1010,6 +1010,7 @@ body.cv .hide-int{display:none!important}
 <div id="lightbox" onclick="closeLightbox()"><img id="lightbox-img" src="https://vf-tools.github.io/konfigurator/"><div id="lightbox-caption"></div></div>
 
 <div id="toast"></div>
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:9999;align-items:center;justify-content:center"><div style="background:#fff;padding:18px 32px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15)">Wird geladen\u2026</div></div>
 
 <script>
 
@@ -1047,8 +1048,8 @@ function checkAuth(){
 }
 
 // ─── CREDENTIALS ─────────────────────────────────────────────────────────────
-let SURL=localStorage.getItem('vf_url')||'https://yppdvusdxfoudaqymhba.supabase.co';
-let SKEY=localStorage.getItem('vf_key')||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcGR2dXNkeGZvdWRhcXltaGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQ3ODEsImV4cCI6MjA5MDg5MDc4MX0.0f0PxK3vidpyXUFSRhBYWpX7ylETIv9tFGEivGk50nU';
+let SURL=localStorage.getItem('vf_url')||'';
+let SKEY=localStorage.getItem('vf_key')||'';
 let DEMO=!SURL.startsWith('https://');
 let _sb=null;
 
@@ -1239,22 +1240,22 @@ var db={
     f=f||{};
     if(DEMO||!_sb){var r=DB[t]?DB[t].slice():[];Object.keys(f).forEach(function(k){r=r.filter(function(x){return x[k]==f[k]})});return Promise.resolve({data:r})}
     var q=_sb.from(t).select('*');Object.keys(f).forEach(function(k){q=q.eq(k,f[k])});
-    return q.then(function(res){if(res.error)console.error(t,res.error);return{data:res.data||[]}});
+    return q.then(function(res){if(res.error){console.error(t,res.error);toast('Laden fehlgeschlagen')}return{data:res.data||[]}});
   },
   insert:function(t,row){
     if(DEMO||!_sb){
       var keys={categories:'cat',subcategories:'sub',services:'svc',vehicles:'veh',configurations:'conf',config_items:'item',versions:'ver',activities:'act',attr_groups:'ag',attr_options:'ao',config_attrs:'ca',pipeline_snapshots:'ps'};
       var k=keys[t]||'conf';var nr=Object.assign({},row,{id:DB._id[k]++});if(!DB[t])DB[t]=[];DB[t].push(nr);return Promise.resolve({data:nr});
     }
-    return _sb.from(t).insert(row).select().single().then(function(res){if(res.error)console.error(t,res.error);return{data:res.data}});
+    return _sb.from(t).insert(row).select().single().then(function(res){if(res.error){console.error(t,res.error);toast('Erstellen fehlgeschlagen')}return{data:res.data}});
   },
   update:function(t,id,u){
     if(DEMO||!_sb){DB[t]=(DB[t]||[]).map(function(r){return r.id==id?Object.assign({},r,u):r});return Promise.resolve({})}
-    return _sb.from(t).update(u).eq('id',id).then(function(res){if(res.error)console.error(t,res.error);return{}});
+    return _sb.from(t).update(u).eq('id',id).then(function(res){if(res.error){console.error(t,res.error);toast('Speichern fehlgeschlagen')}return{}});
   },
   delete:function(t,id){
     if(DEMO||!_sb){DB[t]=(DB[t]||[]).filter(function(r){return r.id!=id});return Promise.resolve({})}
-    return _sb.from(t).delete().eq('id',id).then(function(){return{}});
+    return _sb.from(t).delete().eq('id',id).then(function(){return{}}).catch(function(e){console.error(t,e);toast('L\u00f6schen fehlgeschlagen')});
   },
   getSetting:function(k){
     if(DEMO||!_sb){var s=DB.settings.find(function(r){return r.key===k});return Promise.resolve(s?s.value:null)}
@@ -1295,6 +1296,22 @@ var ICO={1:'🏗',2:'🏗',3:'🔋',4:'🔋',5:'☀️',6:'⚡',7:'🪵',8:'🪵
 
 function toast(msg){var el=$('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show')},2500)}
 
+// ─── LOADING OVERLAY ─────────────────────────────────────────────────────────
+function showLoading(){var el=$('loading-overlay');if(el)el.style.display='flex'}
+function hideLoading(){var el=$('loading-overlay');if(el)el.style.display='none'}
+
+// ─── VALIDATION ──────────────────────────────────────────────────────────────
+function clamp(v,min,max,fallback){var n=parseFloat(v);return isNaN(n)?fallback:Math.min(max,Math.max(min,n))}
+function requireName(v){return(v||'').trim().length>0}
+
+// ─── ASYNC GUARD ─────────────────────────────────────────────────────────────
+var _busy={};
+function guardAsync(key,fn){
+  if(_busy[key])return Promise.resolve();
+  _busy[key]=true;
+  return fn().catch(function(e){console.error(key,e);toast('Fehler: '+key)}).finally(function(){_busy[key]=false});
+}
+
 // ─── STATE ────────────────────────────────────────────────────────────────────
 var S={
   configs:[],cats:[],subcats:[],services:[],vehicles:[],versions:[],
@@ -1324,16 +1341,18 @@ async function loadMaster(){
 
 // ─── PRICE CALC ───────────────────────────────────────────────────────────────
 function calcItem(svc,qty,vf,pf,ov){
-  if(ov!=null&&ov!=='')return parseFloat(ov);
+  if(!svc)return 0;
+  if(ov!=null&&ov!==''){var o=parseFloat(ov);return isNaN(o)?0:o}
   var price;
   if(svc.material_cost||svc.labor_hours){
-    var matNetto=(svc.material_cost||0)*(1+(S.materialMarkup||0)/100);
-    var lohnNetto=(svc.labor_hours||0)*(S.hourlyRate||85);
+    var matNetto=(parseFloat(svc.material_cost)||0)*(1+(S.materialMarkup||0)/100);
+    var lohnNetto=(parseFloat(svc.labor_hours)||0)*(S.hourlyRate||85);
     price=(matNetto+lohnNetto)*(1+(S.profitMargin||0)/100)*1.19;
   } else {
-    price=svc.base_price;
+    price=parseFloat(svc.base_price)||0;
   }
-  return(svc.applies_vehicle_factor?price*vf:price)*pf*qty;
+  var result=(svc.applies_vehicle_factor?price*(vf||1):price)*(pf||1)*(qty||1);
+  return isNaN(result)?0:result;
 }
 
 function calcAttrSurcharge(opts){
@@ -1417,7 +1436,7 @@ async function checkBallReset(configs){
       if(daysSince>=7&&!hasUpcoming){
         c.ball_at='uns';
         c.ball_since=today;
-        db.update('configurations',c.id,{ball_at:'uns',ball_since:today}).catch(function(e){console.error('DB update error',e)});
+        db.update('configurations',c.id,{ball_at:'uns',ball_since:today}).catch(function(e){console.error('DB error',e);toast('Speichern fehlgeschlagen \u2013 bitte erneut versuchen')});
       }
     }
   });
@@ -1496,6 +1515,7 @@ function nav(view){
   $('view-config').style.display='none';
   $('cv-toggle').style.display='none';
   S.currentView=view;
+  location.hash=view;
   if(view==='home')renderHome();
   if(view==='configs')renderConfigs();
   if(view==='pipeline')renderPipeline();
@@ -1877,10 +1897,12 @@ async function doCreate(status){
 
 // ─── OPEN CONFIG ──────────────────────────────────────────────────────────────
 async function openConfig(id){
+  showLoading();
   await loadMaster();
   var confs=await db.get('configurations');
   S.cfg=(confs.data||[]).find(function(c){return c.id==id});
   if(!S.cfg)return;
+  location.hash='config/'+id;
   var results=await Promise.all([
     db.get('config_items',{configuration_id:id}),
     db.get('versions',{configuration_id:id}),
@@ -1896,7 +1918,7 @@ async function openConfig(id){
   ['home','configs','pipeline','review','setup'].forEach(function(v){var el=$('view-'+v);if(el)el.classList.remove('active')});
   var vc=$('view-config');vc.classList.add('active');vc.style.display='grid';
   $('cv-toggle').style.display='flex';
-  renderSidebar();buildTabs();switchTab('uebersicht');
+  renderSidebar();buildTabs();switchTab('uebersicht');hideLoading();
 }
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
@@ -2132,7 +2154,7 @@ function renderSvcCard(svc,vf){
     var cbrd=is3?'var(--ink)':'var(--border2)';
     var cbg2=is3?'var(--ink)':'transparent';
     var cmk2=is3?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1,4.5 3.5,7 8,1.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';
-    return '<div class="svc-card'+(is3?' sel':'')+'" id="sc-'+svc.id+'" onclick="toggleSvc('+svc.id+')" style="border-style:dashed">'
+    return '<div class="svc-card'+(is3?' sel':'')+'" data-svc="'+svc.id+'" onclick="toggleSvc('+svc.id+')" style="border-style:dashed">'
       +'<div class="svc-body" style="padding:10px">'
       +'<div style="display:flex;align-items:flex-start;gap:8px">'
       +'<div style="width:16px;height:16px;border-radius:4px;border:1.5px solid '+cbrd+';background:'+cbg2+';flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center">'+cmk2+'</div>'
@@ -2159,7 +2181,7 @@ function renderSvcCard(svc,vf){
     ?'<div class="item-note-wrap"><textarea class="item-note" placeholder="Notiz \u2026" oninput="setItemNote('+item.id+',this.value)" onclick="event.stopPropagation()">'+esc(item&&item.notes||'')+'</textarea></div>'
     :'';
   var selDot='<div class="sel-dot"><svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1,4.5 3.5,7 8,1.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
-  return '<div class="svc-card'+(sel?' sel':'')+'" id="sc-'+svc.id+'">'
+  return '<div class="svc-card'+(sel?' sel':'')+'" data-svc="'+svc.id+'">'
     +'<div onclick="toggleSvc('+svc.id+')">'
     +imgHtml
     +'<div class="svc-body">'
@@ -2174,17 +2196,20 @@ function renderSvcCard(svc,vf){
 
 function toggleCat(id){S.openCats[id]=!S.openCats[id];renderLeistungen()}
 
-async function toggleSvc(svcId){
-  var ex=S.items.find(function(i){return i.service_id===svcId});
-  if(ex){await db.delete('config_items',ex.id);S.items=S.items.filter(function(i){return i.id!==ex.id})}
-  else{
-    var svc=S.services.find(function(s){return s.id===svcId});
-    var defMat=svc.material_cost||Math.round(svc.base_price*2/3*100)/100;
-    var defH=svc.labor_hours||Math.round(svc.base_price/3/(S.hourlyRate||85)*10)/10;
-    var res=await db.insert('config_items',{configuration_id:S.cfg.id,service_id:svcId,quantity:1,base_price:svc.base_price,vehicle_factor_applied:svc.applies_vehicle_factor,manual_override_price:null,notes:'',material_cost:defMat,labor_hours:defH,mat_pct:100,labor_pct:100});
-    S.items.push(res.data);
-  }
-  updatePrices();renderLeistungen();
+function toggleSvc(svcId){
+  markDirty();
+  guardAsync('svc-'+svcId,async function(){
+    var ex=S.items.find(function(i){return i.service_id===svcId});
+    if(ex){await db.delete('config_items',ex.id);S.items=S.items.filter(function(i){return i.id!==ex.id})}
+    else{
+      var svc=S.services.find(function(s){return s.id===svcId});if(!svc)return;
+      var defMat=svc.material_cost||Math.round(svc.base_price*2/3*100)/100;
+      var defH=svc.labor_hours||Math.round(svc.base_price/3/(S.hourlyRate||85)*10)/10;
+      var res=await db.insert('config_items',{configuration_id:S.cfg.id,service_id:svcId,quantity:1,base_price:svc.base_price,vehicle_factor_applied:svc.applies_vehicle_factor,manual_override_price:null,notes:'',material_cost:defMat,labor_hours:defH,mat_pct:100,labor_pct:100});
+      if(res.data)S.items.push(res.data);
+    }
+    updatePrices();renderLeistungen();
+  });
 }
 
 async function chgQty(svcId,delta){
@@ -2230,16 +2255,18 @@ function renderAusstattung(){
   $('tab-body').innerHTML=html;
 }
 
-async function selectAttr(groupId,optionId){
-  var existing=S.configAttrs.find(function(ca){return ca.group_id===groupId});
-  if(existing){
-    if(existing.option_id===optionId){await db.delete('config_attrs',existing.id);S.configAttrs=S.configAttrs.filter(function(ca){return ca.id!==existing.id})}
-    else{await db.update('config_attrs',existing.id,{option_id:optionId});existing.option_id=optionId}
-  } else {
-    var res=await db.insert('config_attrs',{configuration_id:S.cfg.id,group_id:groupId,option_id:optionId});
-    S.configAttrs.push(res.data);
-  }
-  updatePrices();if(S.activeTab==='leistungen')renderLeistungen();else renderAusstattung();
+function selectAttr(groupId,optionId){
+  guardAsync('attr-'+groupId,async function(){
+    var existing=S.configAttrs.find(function(ca){return ca.group_id===groupId});
+    if(existing){
+      if(existing.option_id===optionId){await db.delete('config_attrs',existing.id);S.configAttrs=S.configAttrs.filter(function(ca){return ca.id!==existing.id})}
+      else{await db.update('config_attrs',existing.id,{option_id:optionId});existing.option_id=optionId}
+    } else {
+      var res=await db.insert('config_attrs',{configuration_id:S.cfg.id,group_id:groupId,option_id:optionId});
+      if(res.data)S.configAttrs.push(res.data);
+    }
+    updatePrices();if(S.activeTab==='leistungen')renderLeistungen();else renderAusstattung();
+  });
 }
 
 // ─── POSITIONEN ───────────────────────────────────────────────────────────────
@@ -2310,7 +2337,7 @@ function setSvcField(svcId,field,val){
   if(!svc)return;
   svc[field]=parseFloat(val)||0;
   var u={};u[field]=svc[field];
-  db.update('services',svcId,u).catch(function(e){console.error('DB update error',e)});
+  db.update('services',svcId,u).catch(function(e){console.error('DB error',e);toast('Speichern fehlgeschlagen \u2013 bitte erneut versuchen')});
 }
 function setItemPct(itemId,type,pct,svcId){
   var item=S.items.find(function(i){return i.id===itemId});
@@ -2328,7 +2355,7 @@ function setItemPct(itemId,type,pct,svcId){
     item.labor_hours=Math.round(defH*p/100*10)/10;
     var u={labor_pct:p,labor_hours:item.labor_hours};
   }
-  db.update('config_items',itemId,u).catch(function(e){console.error('DB update error',e)});
+  db.update('config_items',itemId,u).catch(function(e){console.error('DB error',e);toast('Speichern fehlgeschlagen \u2013 bitte erneut versuchen')});
   renderPositionen();
 }
 function updatePctLabel(slider,itemId,type,svcId){
@@ -2347,7 +2374,7 @@ function setItemField(itemId,field,val){
   if(!item)return;
   item[field]=parseFloat(val)||0;
   var u={};u[field]=item[field];
-  db.update('config_items',itemId,u).catch(function(e){console.error('DB update error',e)});
+  db.update('config_items',itemId,u).catch(function(e){console.error('DB error',e);toast('Speichern fehlgeschlagen \u2013 bitte erneut versuchen')});
 }
 async function setOverride(itemId,val){
   var v=val===''?null:parseFloat(val);
@@ -2431,7 +2458,7 @@ function renderKopfdaten(){
     +'<div><label class="f-label">E-Mail</label><input class="f-input" value="'+esc(cfg.email||'')+'" oninput="S.cfg.email=this.value;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Quelle</label><input class="f-input" value="'+esc(cfg.customer_source||'')+'" oninput="S.cfg.customer_source=this.value;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Zeithorizont</label><input class="f-input" value="'+esc(cfg.time_horizon||'')+'" oninput="S.cfg.time_horizon=this.value;scheduleAutoSave()"/></div>'
-    +'<div><label class="f-label">Rabatt / Zuschlag (%)</label><input class="f-input" type="number" step="0.5" value="'+(cfg.configuration_discount_percent||0)+'" oninput="S.cfg.configuration_discount_percent=parseFloat(this.value)||0;updatePrices();scheduleAutoSave()"/></div>'
+    +'<div><label class="f-label">Rabatt / Zuschlag (%)</label><input class="f-input" type="number" step="0.5" value="'+(cfg.configuration_discount_percent||0)+'" oninput="S.cfg.configuration_discount_percent=clamp(this.value,-50,50,0);updatePrices();scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Schätzwert (€)</label><input class="f-input" type="number" value="'+(cfg.estimated_value||'')+'" placeholder="für frühe Gespräche" oninput="S.cfg.estimated_value=parseFloat(this.value)||null;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Fahrzeug von uns?</label><select class="f-input" onchange="S.cfg.vehicle_from_us=this.value===\'ja\'"><option'+((!cfg.vehicle_from_us)?' selected':'')+'>nein</option><option value="ja"'+(cfg.vehicle_from_us?' selected':'')+'>ja</option></select></div>'
     +'<div class="full"><label class="f-label">Projektnotiz</label><textarea class="f-input" oninput="S.cfg.notes=this.value;$(\'proj-note\').value=this.value">'+esc(cfg.notes||'')+'</textarea></div>'
@@ -2453,7 +2480,8 @@ function renderVersionen(){
 // ─── SAVE ─────────────────────────────────────────────────────────────────────
 async function saveConfig(){
   var cfg=S.cfg;if(!cfg)return;
-  var btn=$('save-btn');btn.textContent='Speichert \u2026';
+  clearTimeout(_autoSaveTimer);
+  var btn=$('save-btn');btn.disabled=true;btn.textContent='Speichert \u2026';
   var newV=(cfg.version_number||1)+1;
   await db.update('configurations',cfg.id,{
     customer_name:cfg.customer_name,customer_source:cfg.customer_source,
@@ -2470,7 +2498,7 @@ async function saveConfig(){
   });
   var res=await db.insert('versions',{configuration_id:cfg.id,version_number:newV,created_at:new Date().toISOString(),change_note:'Gespeichert'});
   S.versions.push(res.data);cfg.version_number=newV;
-  btn.textContent='Speichern';toast('Gespeichert \u00b7 Version '+newV);
+  btn.disabled=false;btn.textContent='Speichern';_dirty=false;toast('Gespeichert \u00b7 Version '+newV);
 }
 
 async function createVersion(){
@@ -3159,13 +3187,14 @@ async function renderABody(){
 async function savePF(){var v=$('pf-in').value;await db.setSetting('price_adjustment_factor',v);S.priceFactor=parseFloat(v)||1.0;toast('Gespeichert')}
 async function saveHR(){var v=$('hr-in').value;await db.setSetting('hourly_rate',v);S.hourlyRate=parseFloat(v)||85.0;toast('Stundensatz gespeichert')}
 async function saveCalcSettings(){
-  var hr=$('hr-in').value;var mm=$('mm-in').value;var pm=$('pm-in').value;var pf=$('pf-in').value;
+  var hr=clamp($('hr-in').value,10,500,85);var mm=clamp($('mm-in').value,0,100,0);
+  var pm=clamp($('pm-in').value,0,50,0);var pf=clamp($('pf-in').value,0.5,2.0,1.0);
+  $('hr-in').value=hr;$('mm-in').value=mm;$('pm-in').value=pm;$('pf-in').value=pf;
   await Promise.all([
-    db.setSetting('hourly_rate',hr),db.setSetting('material_markup',mm),
-    db.setSetting('profit_margin',pm),db.setSetting('price_adjustment_factor',pf)
+    db.setSetting('hourly_rate',String(hr)),db.setSetting('material_markup',String(mm)),
+    db.setSetting('profit_margin',String(pm)),db.setSetting('price_adjustment_factor',String(pf))
   ]);
-  S.hourlyRate=parseFloat(hr)||85;S.materialMarkup=parseFloat(mm)||0;
-  S.profitMargin=parseFloat(pm)||0;S.priceFactor=parseFloat(pf)||1.0;
+  S.hourlyRate=hr;S.materialMarkup=mm;S.profitMargin=pm;S.priceFactor=pf;
   toast('Kalkulation gespeichert');updateCalcExample();
 }
 function updateCalcExample(){
@@ -3198,7 +3227,8 @@ function editCat(id){
     +'<button class="btn btn-primary" onclick="saveCat('+(id||'null')+')">Speichern</button></div>');
 }
 async function saveCat(id){
-  var d={name:$('ec-n').value,sort_order:parseInt($('ec-s').value)||99,active:true};
+  if(!requireName($('ec-n').value)){toast('Name darf nicht leer sein');return}
+  var d={name:$('ec-n').value.trim(),sort_order:clamp($('ec-s').value,1,999,99),active:true};
   if(id)await db.update('categories',id,d);else await db.insert('categories',d);
   closeModal();await loadMaster();renderABody();toast('Gespeichert');
 }
@@ -3215,7 +3245,8 @@ function editSub(id){
     +'<button class="btn btn-primary" onclick="saveSub('+(id||'null')+')">Speichern</button></div>');
 }
 async function saveSub(id){
-  var d={name:$('esb-n').value,category_id:parseInt($('esb-c').value),sort_order:parseInt($('esb-s').value)||99,active:true};
+  if(!requireName($('esb-n').value)){toast('Name darf nicht leer sein');return}
+  var d={name:$('esb-n').value.trim(),category_id:parseInt($('esb-c').value),sort_order:clamp($('esb-s').value,1,999,99),active:true};
   if(id)await db.update('subcategories',id,d);else await db.insert('subcategories',d);
   closeModal();await loadMaster();renderABody();toast('Gespeichert');
 }
@@ -3280,7 +3311,7 @@ function editVeh(id){
     +'<button class="btn btn-primary" onclick="saveVeh('+(id||'null')+')">Speichern</button></div>');
 }
 async function saveVeh(id){
-  var d={name:$('ev-n').value,manufacturer:$('ev-m').value,vehicle_factor:parseFloat($('ev-f').value)||1,length_class:$('ev-l').value,height_class:$('ev-h').value,active:true};
+  var d={name:$('ev-n').value,manufacturer:$('ev-m').value,vehicle_factor:clamp($('ev-f').value,0.5,3.0,1),length_class:$('ev-l').value,height_class:$('ev-h').value,active:true};
   if(id)await db.update('vehicles',id,d);else await db.insert('vehicles',d);
   closeModal();await loadMaster();renderABody();toast('Gespeichert');
 }
@@ -3288,11 +3319,12 @@ async function saveVeh(id){
 var _pi=null;
 var _autoSaveTimer=null;
 function scheduleAutoSave(){
+  markDirty();
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer=setTimeout(function(){autoSave()},2000);
 }
 async function autoSave(){
-  var cfg=S.cfg;if(!cfg)return;
+  var cfg=S.cfg;if(!cfg||_busy['save'])return;
   await db.update('configurations',cfg.id,{
     customer_name:cfg.customer_name,customer_source:cfg.customer_source,
     time_horizon:cfg.time_horizon,vehicle_model_id:cfg.vehicle_model_id,
@@ -3307,6 +3339,7 @@ async function autoSave(){
     meeting_date:cfg.meeting_date||null,
     updated_at:new Date().toISOString(),
   });
+  _dirty=false;
 }
 function editSvc(id){
   var s=id?DB.services.find(function(x){return x.id==id})||{}:{};_pi=null;
@@ -3488,14 +3521,15 @@ async function clearImg(svcId){
   var prev=$('img-prev');if(prev)prev.innerHTML='';_pi=null;
 }
 async function saveSvc(id){
+  if(!requireName($('es-n').value)){toast('Name darf nicht leer sein');return}
   var imageUrl;
   if(_pi){toast('Bild wird hochgeladen \u2026');imageUrl=await db.uploadImage(_pi.file,id||'new')}
   var subcatId=parseInt($('es-sc').value)||null;
-  var d={name:$('es-n').value,category_id:parseInt($('es-c').value),subcategory_id:subcatId,
-    unit:$('es-u').value,base_price:parseFloat($('es-p').value)||0,sort_order:parseInt($('es-s').value)||99,
+  var d={name:$('es-n').value.trim(),category_id:parseInt($('es-c').value),subcategory_id:subcatId,
+    unit:$('es-u').value,base_price:clamp($('es-p').value,0,999999,0),sort_order:clamp($('es-s').value,1,999,99),
     description:$('es-d').value,applies_vehicle_factor:$('es-f').checked,active:true,
-    material_cost:$('es-mat')&&$('es-mat').value?parseFloat($('es-mat').value)||0:0,
-    labor_hours:$('es-lh')&&$('es-lh').value?parseFloat($('es-lh').value)||0:0};
+    material_cost:$('es-mat')&&$('es-mat').value?clamp($('es-mat').value,0,999999,0):0,
+    labor_hours:$('es-lh')&&$('es-lh').value?clamp($('es-lh').value,0,9999,0):0};
   if(imageUrl!==undefined)d.image_url=imageUrl;
   if(id){
     await db.update('services',id,d);
@@ -3820,8 +3854,16 @@ async function appStart(){
   await loadMaster();
   var su=$('su-url');var sk=$('su-key');
   if(su)su.value=SURL;if(sk)sk.value=SKEY;
-  nav('home');
+  var h=(location.hash||'').replace('#','');
+  if(h.startsWith('config/')){var cid=parseInt(h.split('/')[1]);if(cid)openConfig(cid);else nav('home')}
+  else if(['configs','pipeline','review'].indexOf(h)>=0){nav(h)}
+  else{nav('home')}
 }
+
+// Unsaved changes warning
+var _dirty=false;
+function markDirty(){_dirty=true}
+window.addEventListener('beforeunload',function(e){if(_dirty){e.preventDefault();e.returnValue=''}});
 
 // Start
 if(sessionStorage.getItem('vf_auth')==='1'){
