@@ -1003,10 +1003,16 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
 <div id="crop-wrap">
   <div class="crop-modal">
     <h3>Bildausschnitt wählen</h3>
-    <p>Ziehe das Bild um den Ausschnitt zu wählen. Das Verhältnis 2:1 ist fix (passend zur Kachel).</p>
+    <p>Ziehe das Bild um den Ausschnitt zu wählen. Zoom mit Slider oder Mausrad. Das Verhältnis 2:1 ist fix.</p>
     <div class="crop-canvas-wrap" id="crop-wrap-inner">
       <canvas id="crop-canvas"></canvas>
       <canvas id="crop-overlay" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%"></canvas>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+      <span style="font-size:12px;color:var(--ink3)">-</span>
+      <input type="range" id="crop-zoom" min="100" max="300" value="100" step="5" style="flex:1;height:3px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;outline:none" oninput="applyCropZoom(parseInt(this.value))">
+      <span style="font-size:12px;color:var(--ink3)">+</span>
+      <span id="crop-zoom-val" style="font-size:11px;color:var(--ink3);min-width:35px">100%</span>
     </div>
     <div class="crop-actions">
       <button class="btn" onclick="cancelCrop()">Abbrechen</button>
@@ -3334,6 +3340,9 @@ function openCrop(){
   _cropOffX=0;
   _cropOffY=Math.round((dispH-CROP_H)/2);
   cv._dispW=dispW;cv._dispH=dispH;cv._cropH=CROP_H;cv._cropW=DISPLAY_W;
+  cv._baseW=dispW;cv._baseH=dispH;cv._zoom=100;
+  var zoomSlider=document.getElementById('crop-zoom');
+  if(zoomSlider){zoomSlider.value=100;document.getElementById('crop-zoom-val').textContent='100%'}
   drawCrop();
 
   document.getElementById('crop-wrap').style.display='flex';
@@ -3351,6 +3360,15 @@ function openCrop(){
   }
   function onCropUp(){_cropDrag=false}
 
+  function onCropWheel(e){
+    e.preventDefault();
+    var delta=e.deltaY>0?-10:10;
+    var newZoom=Math.max(100,Math.min(300,cv._zoom+delta));
+    var slider=document.getElementById('crop-zoom');
+    if(slider)slider.value=newZoom;
+    applyCropZoom(newZoom);
+  }
+  wrap.addEventListener('wheel',onCropWheel,{passive:false});
   wrap.addEventListener('mousedown',onCropDown);
   wrap.addEventListener('touchstart',onCropDown,{passive:false});
   document.addEventListener('mousemove',onCropMove);
@@ -3358,6 +3376,7 @@ function openCrop(){
   document.addEventListener('mouseup',onCropUp);
   document.addEventListener('touchend',onCropUp);
   cv._cleanup=function(){
+    wrap.removeEventListener('wheel',onCropWheel);
     wrap.removeEventListener('mousedown',onCropDown);
     wrap.removeEventListener('touchstart',onCropDown);
     document.removeEventListener('mousemove',onCropMove);
@@ -3367,6 +3386,21 @@ function openCrop(){
   };
 }
 
+function applyCropZoom(pct){
+  var cv=$('crop-canvas');if(!cv||!cv._baseW)return;
+  var oldW=cv._dispW,oldH=cv._dispH;
+  cv._dispW=Math.round(cv._baseW*pct/100);
+  cv._dispH=Math.round(cv._baseH*pct/100);
+  cv._zoom=pct;
+  // Keep crop centered during zoom
+  _cropOffX=Math.round(_cropOffX*(cv._dispW/oldW));
+  _cropOffY=Math.round(_cropOffY*(cv._dispH/oldH));
+  // Clamp position
+  _cropOffX=Math.max(Math.min(_cropOffX,0),cv._cropW-cv._dispW);
+  _cropOffY=Math.max(Math.min(_cropOffY,0),cv._cropH-cv._dispH);
+  var label=$('crop-zoom-val');if(label)label.textContent=pct+'%';
+  drawCrop();
+}
 function drawCrop(){
   var cv=$('crop-canvas');
   var ctx2=cv.getContext('2d');
