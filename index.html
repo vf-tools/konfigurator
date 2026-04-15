@@ -3442,6 +3442,17 @@ function recropImg(svcId){
   }
   loadAndCrop(origUrl||fallbackUrl,!origUrl);
 }
+function recropLocal(){
+  if(!_piOriginal){toast('Kein Original vorhanden');return}
+  _cropFile=_piOriginal;
+  var r=new FileReader();
+  r.onload=function(ev){
+    _cropImg=new Image();
+    _cropImg.onload=function(){openCrop()};
+    _cropImg.src=ev.target.result;
+  };
+  r.readAsDataURL(_piOriginal);
+}
 function onImgPick(evt){
   var file=evt.target.files[0];if(!file)return;
   _cropFile=file;
@@ -3606,7 +3617,7 @@ function confirmCrop(){
     // Keep original file for uploading alongside cropped version
     _piOriginal=_cropFile;
     var prev=$('img-prev');
-    if(prev)prev.innerHTML='<div class="img-prev-wrap"><img src="'+url+'"/><button class="img-del" onclick="_pi=null;_piOriginal=null;document.getElementById(\'img-prev\').innerHTML=\'\'">×</button></div>';
+    if(prev)prev.innerHTML='<div class="img-prev-wrap"><img src="'+url+'"/><button class="img-del" onclick="_pi=null;_piOriginal=null;document.getElementById(\'img-prev\').innerHTML=\'\'">×</button></div><button class="btn btn-sm" style="margin-top:6px;font-size:11px" onclick="recropLocal()">Zuschneiden</button>';
     toast('Bild zugeschnitten ✓ ('+origKb+'kb → '+Math.round(blob.size/1024)+'kb)');
     document.getElementById('crop-wrap').style.display='none';
     var cv2=document.getElementById('crop-canvas');if(cv2._cleanup)cv2._cleanup();
