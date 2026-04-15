@@ -1233,10 +1233,14 @@ async function loadMaster(){
   S.services=results[2].data.filter(function(s){return s.active});
   S.vehicles=results[3].data.filter(function(v){return v.active});
   S.priceFactor=parseFloat(results[4])||1.0;
-  var calcSettings=await Promise.all([db.getSetting('hourly_rate'),db.getSetting('material_markup'),db.getSetting('profit_margin')]);
+  var calcSettings=await Promise.all([db.getSetting('hourly_rate'),db.getSetting('material_markup'),db.getSetting('profit_margin'),db.getSetting('mat_gkz_pct'),db.getSetting('fert_gkz_pct'),db.getSetting('wug_pct'),db.getSetting('fixkosten_monat')]);
   S.hourlyRate=parseFloat(calcSettings[0])||85.0;
   S.materialMarkup=parseFloat(calcSettings[1])||0;
   S.profitMargin=parseFloat(calcSettings[2])||0;
+  S.matGkzPct=parseFloat(calcSettings[3])||0;
+  S.fertGkzPct=parseFloat(calcSettings[4])||0;
+  S.wugPct=parseFloat(calcSettings[5])||0;
+  S.fixkostenMonat=parseFloat(calcSettings[6])||0;
   S.attrGroups=results[5].data.filter(function(g){return g.active}).sort(function(a,b){return a.sort_order-b.sort_order});
   S.attrOptions=results[6].data.filter(function(o){return o.active}).sort(function(a,b){return a.sort_order-b.sort_order});
 }
@@ -1294,6 +1298,100 @@ function totals(){
   var dPct=parseFloat(S.cfg.configuration_discount_percent)||0;
   var disc=(sub+attrS)*(dPct/100);
   return{sub:sub,attrS:attrS,disc:disc,total:sub+attrS+disc,vf:vf,dPct:dPct};
+}
+
+// ─── BWL KPI BERECHNUNG ──────────────────────────────────────────────────────
+function calcKPI(cfg,items){
+  if(!cfg||!items||!items.length)return null;
+  var hr=cfg.custom_stundensatz!=null?cfg.custom_stundensatz:S.hourlyRate;
+  var matGkz=cfg.custom_mat_gkz_pct!=null?cfg.custom_mat_gkz_pct:S.matGkzPct;
+  var fertGkz=cfg.custom_fert_gkz_pct!=null?cfg.custom_fert_gkz_pct:S.fertGkzPct;
+  var wug=cfg.custom_wug_pct!=null?cfg.custom_wug_pct:S.wugPct;
+
+  // Summe Material und Stunden aus Positionen
+  var totalMat=0,totalH=0;
+  items.forEach(function(item){
+    var svc=S.services.find(function(s){return s.id===item.service_id});
+    if(!svc)return;
+    var matPct=(parseFloat(item.mat_pct)||100)/100;
+    var lPct=(parseFloat(item.labor_pct)||100)/100;
+    totalMat+=(parseFloat(svc.material_cost)||0)*matPct*(parseFloat(item.quantity)||1);
+    totalH+=(parseFloat(svc.labor_hours)||0)*lPct*(parseFloat(item.quantity)||1);
+  });
+
+  var materialKalk=totalMat*(1+matGkz/100);
+  var lohnKalk=totalH*hr*(1+fertGkz/100);
+  var selbstkosten=materialKalk+lohnKalk;
+  var kalkAngebotspreis=selbstkosten*(1+wug/100);
+
+  // Erlös = estimated_value oder Konfigurationswert
+  var t=totals();
+  var erloes=t.total||parseFloat(cfg.estimated_value)||0;
+  if(cfg.configuration_discount_percent)erloes=erloes; // already includes discount
+
+  var db_abs=erloes-(totalMat+totalH*hr);
+  var db_pct=erloes?db_abs/erloes*100:0;
+  var be_abs=erloes-selbstkosten;
+  var be_pct=erloes?be_abs/erloes*100:0;
+  var gewinn_abs=erloes-kalkAngebotspreis;
+  var gewinn_pct=erloes?gewinn_abs/erloes*100:0;
+  var matQuote=erloes?totalMat/erloes*100:0;
+  var lohnQuote=erloes?totalH*hr/erloes*100:0;
+
+  var kpi={
+    totalMat:totalMat,totalH:totalH,hr:hr,matGkz:matGkz,fertGkz:fertGkz,wug:wug,
+    materialKalk:materialKalk,lohnKalk:lohnKalk,selbstkosten:selbstkosten,kalkAngebotspreis:kalkAngebotspreis,
+    erloes:erloes,
+    db_abs:db_abs,db_pct:db_pct,
+    be_abs:be_abs,be_pct:be_pct,
+    gewinn_abs:gewinn_abs,gewinn_pct:gewinn_pct,
+    matQuote:matQuote,lohnQuote:lohnQuote
+  };
+
+  // Nachkalkulation
+  if(cfg.actual_hours!=null&&cfg.actual_hours>0){
+    var ah=parseFloat(cfg.actual_hours);
+    kpi.actualH=ah;
+    kpi.stundenEffizienz=totalH/ah*100;
+    kpi.tatsStundensatz=db_abs/ah;
+    kpi.mehraufwand=(ah-totalH)*hr;
+    kpi.mehraufwandWarning=ah>totalH*1.15;
+  }
+  return kpi;
+}
+
+// KPI für fremde Konfigurationen (Review-Ansicht, ohne totals())
+function calcKPIForConfig(cfg,items){
+  if(!cfg||!items||!items.length)return null;
+  var hr=cfg.custom_stundensatz!=null?cfg.custom_stundensatz:S.hourlyRate;
+  var totalMat=0,totalH=0;
+  items.forEach(function(item){
+    var svc=S.services.find(function(s){return s.id===item.service_id});
+    if(!svc)return;
+    var matPct=(parseFloat(item.mat_pct)||100)/100;
+    var lPct=(parseFloat(item.labor_pct)||100)/100;
+    totalMat+=(parseFloat(svc.material_cost)||0)*matPct*(parseFloat(item.quantity)||1);
+    totalH+=(parseFloat(svc.labor_hours)||0)*lPct*(parseFloat(item.quantity)||1);
+  });
+  var erloes=configTotal(cfg,items,[])||parseFloat(cfg.estimated_value)||0;
+  var db_abs=erloes-(totalMat+totalH*hr);
+  var db_pct=erloes?db_abs/erloes*100:0;
+  var matGkz=cfg.custom_mat_gkz_pct!=null?cfg.custom_mat_gkz_pct:S.matGkzPct;
+  var fertGkz=cfg.custom_fert_gkz_pct!=null?cfg.custom_fert_gkz_pct:S.fertGkzPct;
+  var wug=cfg.custom_wug_pct!=null?cfg.custom_wug_pct:S.wugPct;
+  var selbstkosten=totalMat*(1+matGkz/100)+totalH*hr*(1+fertGkz/100);
+  var kalkPreis=selbstkosten*(1+wug/100);
+  var be_abs=erloes-selbstkosten;var be_pct=erloes?be_abs/erloes*100:0;
+  var gewinn_abs=erloes-kalkPreis;var gewinn_pct=erloes?gewinn_abs/erloes*100:0;
+  var matQuote=erloes?totalMat/erloes*100:0;
+  var lohnQuote=erloes?totalH*hr/erloes*100:0;
+  var r={totalMat:totalMat,totalH:totalH,hr:hr,erloes:erloes,db_abs:db_abs,db_pct:db_pct,be_abs:be_abs,be_pct:be_pct,gewinn_abs:gewinn_abs,gewinn_pct:gewinn_pct,matQuote:matQuote,lohnQuote:lohnQuote};
+  if(cfg.actual_hours>0){
+    var ah=parseFloat(cfg.actual_hours);
+    r.actualH=ah;r.stundenEffizienz=totalH/ah*100;r.tatsStundensatz=db_abs/ah;
+    r.mehraufwand=(ah-totalH)*hr;r.mehraufwandWarning=ah>totalH*1.15;
+  }
+  return r;
 }
 
 function configTotal(cfg,items,cfgAttrs){
@@ -1506,8 +1604,9 @@ async function renderConfigs(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
   var t=S.configs.length;
-  var o=S.configs.filter(function(c){return c.status==='Neu'||c.status==='In Kontakt'}).length;
-  $('configs-sub').textContent=t?t+' Konfiguration'+(t!==1?'en':'')+' \u00b7 '+o+' offen':'';
+  var offen=S.configs.filter(function(c){return c.status!=='Abgeschlossen'&&c.status!=='Verworfen'}).length;
+  var abgeschlossen=S.configs.filter(function(c){return c.status==='Abgeschlossen'}).length;
+  $('configs-sub').textContent=t?t+' Konfiguration'+(t!==1?'en':'')+' \u00b7 '+offen+' offen \u00b7 '+abgeschlossen+' abgeschlossen':'';
   renderConfigList('');
 }
 
@@ -1516,13 +1615,44 @@ function renderConfigList(q){
   var list=S.configs.slice().sort(function(a,b){return new Date(b.updated_at||b.created_at||0)-new Date(a.updated_at||a.created_at||0)});
   if(q)list=list.filter(function(c){return(c.customer_name||'').toLowerCase().indexOf(q.toLowerCase())>=0||(c.status||'').toLowerCase().indexOf(q.toLowerCase())>=0});
   if(!list.length){el.innerHTML='<div class="empty">Noch keine Konfigurationen.</div>';return}
-  el.innerHTML=list.map(function(c){
-    return '<div class="config-card" onclick="openConfig('+c.id+')">'
-      +'<div><div class="card-name">'+esc(c.customer_name)+'</div>'
-      +'<div class="card-sub">'+esc(c.vehicle_name||'\u2014')+' &middot; v'+(c.version_number||1)+' &middot; '+esc(c.time_horizon||'\u2014')+'</div></div>'
-      +'<span class="badge" style="background:'+(SCOL[c.status]||'#888')+'15;color:'+(SCOL[c.status]||'#888')+'">'+esc(c.status||'Neu')+'</span>'
+
+  // Group by status category
+  var groups=[
+    {label:'Offen',icon:'🟢',statuses:['Neu','In Kontakt','Qualifizierung','Konzept & Folgetermin','Angebot versendet']},
+    {label:'Abgeschlossen',icon:'✓',statuses:['Abgeschlossen']},
+    {label:'Verworfen',icon:'✗',statuses:['Verworfen']}
+  ];
+  var html='';
+  groups.forEach(function(g){
+    var items=list.filter(function(c){return g.statuses.indexOf(c.status||'Neu')>=0});
+    if(!items.length)return;
+    var col=g.label==='Offen'?'var(--pine)':g.label==='Abgeschlossen'?'var(--ink3)':'var(--red)';
+    html+='<div style="margin-bottom:20px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1.5px solid var(--border)">'
+      +'<span style="font-size:12px">'+g.icon+'</span>'
+      +'<span style="font-size:13px;font-weight:700;color:'+col+'">'+g.label+'</span>'
+      +'<span style="font-size:11px;color:var(--ink3);font-weight:500">'+items.length+'</span>'
       +'</div>';
-  }).join('');
+    items.forEach(function(c){
+      var today=todayStr();
+      var followupHint='';
+      if(c.followup_date){
+        if(c.followup_date<today)followupHint='<span style="font-size:10px;color:var(--red);margin-left:6px">↩ überfällig</span>';
+        else if(c.followup_date===today)followupHint='<span style="font-size:10px;color:var(--amber);margin-left:6px">↩ heute</span>';
+      }
+      var valHint='';
+      if(c.estimated_value)valHint='<span style="font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums">'+fmtK(c.estimated_value)+' €</span>';
+      var srcBadge=c.customer_source?'<span style="font-size:10px;color:var(--ink3);background:var(--surface3);padding:1px 6px;border-radius:4px">'+esc(c.customer_source)+'</span>':'';
+      html+='<div class="config-card" onclick="openConfig('+c.id+')">'
+        +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><div class="card-name">'+esc(c.customer_name)+'</div>'+followupHint+'</div>'
+        +'<div class="card-sub" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+esc(c.vehicle_name||'\u2014')+' &middot; v'+(c.version_number||1)+(c.time_horizon?' &middot; '+esc(c.time_horizon):'')+' '+srcBadge+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:10px">'+valHint
+        +'<span class="badge" style="background:'+(SCOL[c.status]||'#888')+'15;color:'+(SCOL[c.status]||'#888')+'">'+esc(c.status||'Neu')+'</span>'
+        +'</div></div>';
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
 }
 
 // ─── PIPELINE ─────────────────────────────────────────────────────────────────
@@ -1661,8 +1791,10 @@ async function onKcolDrop(e){
 async function renderReview(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
-  var allItems=DEMO?DB.config_items:[];
-  var allAttrs=DEMO?DB.config_attrs:[];
+  var allItemsRes=DEMO?{data:DB.config_items}:await db.get('config_items');
+  var allAttrsRes=DEMO?{data:DB.config_attrs}:await db.get('config_attrs');
+  var allItems=allItemsRes.data||[];
+  var allAttrs=allAttrsRes.data||[];
   var snapshots=await db.get('pipeline_snapshots');
 
   var sources=[...new Set(S.configs.map(function(c){return c.customer_source}).filter(Boolean))];
@@ -1795,8 +1927,56 @@ async function renderReview(){
     +'<tbody>'+(tableRows||'<tr><td colspan="6" style="text-align:center;color:var(--ink3);padding:24px">Keine Daten</td></tr>')+'</tbody></table></div>'
     +kpiHtml
     +sourceHtml
+    +buildBWLReview(wonConfigs,allItems)
     +buildDiscardTable(periodConfigs)
     +buildStageTimesTable(periodConfigs);
+}
+
+function buildBWLReview(wonConfigs,allItems){
+  // Calculate BWL KPIs for all won configs that have items
+  var kpis=[];
+  wonConfigs.forEach(function(c){
+    var items=allItems.filter(function(i){return i.configuration_id===c.id});
+    var k=calcKPIForConfig(c,items);
+    if(k)kpis.push(k);
+  });
+  if(!kpis.length)return '';
+  var avgDB=kpis.reduce(function(s,k){return s+k.db_pct},0)/kpis.length;
+  var avgBE=kpis.reduce(function(s,k){return s+k.be_pct},0)/kpis.length;
+  var avgGewinn=kpis.reduce(function(s,k){return s+k.gewinn_pct},0)/kpis.length;
+  var avgH=kpis.reduce(function(s,k){return s+k.totalH},0)/kpis.length;
+  var avgMatQ=kpis.reduce(function(s,k){return s+k.matQuote},0)/kpis.length;
+  // Stundeneffizienz nur für configs mit actual_hours
+  var effKpis=kpis.filter(function(k){return k.actualH>0});
+  var avgEff=effKpis.length?effKpis.reduce(function(s,k){return s+k.stundenEffizienz},0)/effKpis.length:0;
+  var avgTatsHS=effKpis.length?effKpis.reduce(function(s,k){return s+k.tatsStundensatz},0)/effKpis.length:0;
+  // Rabatt & Mehraufwand
+  var mitRabatt=wonConfigs.filter(function(c){return parseFloat(c.configuration_discount_percent||0)<0}).length;
+  var mitMehraufwand=effKpis.filter(function(k){return k.mehraufwandWarning}).length;
+
+  var html='<div style="margin-top:20px"><div class="section-lbl" style="margin-bottom:12px">Kalkulation & Marge ('+kpis.length+' Aufträge mit Leistungen)</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'
+    +'<div class="ps-card"><div class="ps-label">Ø Deckungsbeitrag</div><div class="ps-val" style="color:'+(avgDB>=25?'var(--green)':avgDB>=15?'var(--amber)':'var(--red)')+'">'+avgDB.toFixed(1)+'%</div></div>'
+    +'<div class="ps-card"><div class="ps-label">Ø Betriebsergebnis</div><div class="ps-val" style="color:'+(avgBE>=15?'var(--green)':avgBE>=5?'var(--amber)':'var(--red)')+'">'+avgBE.toFixed(1)+'%</div></div>'
+    +'<div class="ps-card"><div class="ps-label">Ø Kalk. Gewinn</div><div class="ps-val" style="color:'+(avgGewinn>=10?'var(--green)':avgGewinn>=0?'var(--amber)':'var(--red)')+'">'+avgGewinn.toFixed(1)+'%</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px">'
+    +'<div class="ps-card"><div class="ps-label">Ø Lohnstunden</div><div class="ps-val">'+avgH.toFixed(1)+'h</div></div>'
+    +'<div class="ps-card"><div class="ps-label">Ø Materialquote</div><div class="ps-val">'+avgMatQ.toFixed(1)+'%</div></div>'
+    +(avgEff?'<div class="ps-card"><div class="ps-label">Ø Stundeneffizienz</div><div class="ps-val" style="color:'+(avgEff>=90?'var(--green)':avgEff>=75?'var(--amber)':'var(--red)')+'">'+avgEff.toFixed(0)+'%</div><div class="ps-sub">aus '+effKpis.length+' Projekten</div></div>'
+      :'<div class="ps-card"><div class="ps-label">Ø Stundeneffizienz</div><div class="ps-val">&mdash;</div><div class="ps-sub">keine Ist-Stunden erfasst</div></div>')
+    +'</div>';
+
+  if(avgTatsHS||mitRabatt||mitMehraufwand){
+    html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px">';
+    if(avgTatsHS)html+='<div class="ps-card"><div class="ps-label">Ø tats. Stundensatz</div><div class="ps-val">'+fmt(avgTatsHS)+'</div><div class="ps-sub">pro Stunde</div></div>';
+    else html+='<div class="ps-card"><div class="ps-label">Ø tats. Stundensatz</div><div class="ps-val">&mdash;</div></div>';
+    html+='<div class="ps-card"><div class="ps-label">Aufträge mit Rabatt</div><div class="ps-val">'+mitRabatt+'</div><div class="ps-sub">von '+wonConfigs.length+'</div></div>';
+    html+='<div class="ps-card"><div class="ps-label">Mehraufwand >15%</div><div class="ps-val" style="color:'+(mitMehraufwand?'var(--red)':'var(--green)')+'">'+mitMehraufwand+'</div><div class="ps-sub">von '+effKpis.length+' mit Ist-Std.</div></div>';
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
 }
 
 function buildDiscardTable(configs){
@@ -2061,6 +2241,70 @@ function renderUebersicht(){
   if(cfg.followup_date)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wiedervorlage</span><span style="font-weight:500;color:'+(cfg.followup_date<today?'var(--red)':cfg.followup_date===today?'var(--amber)':'var(--ink)')+'">'+new Date(cfg.followup_date).toLocaleDateString('de-DE')+'</span></div>';
   html+='</div></div>';
   html+='</div>';
+
+  // ── KPI Block ──
+  var kpi=calcKPI(cfg,S.items);
+  if(kpi){
+    var dbCol=kpi.db_pct>=25?'var(--green)':kpi.db_pct>=15?'var(--amber)':'var(--red)';
+    var beCol=kpi.be_pct>=15?'var(--green)':kpi.be_pct>=5?'var(--amber)':'var(--red)';
+    var gwCol=kpi.gewinn_pct>=10?'var(--green)':kpi.gewinn_pct>=0?'var(--amber)':'var(--red)';
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px">'
+      +'<div class="section-lbl" style="margin-bottom:12px">Kalkulations-KPIs</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--ink3)">Deckungsbeitrag</div><div style="font-size:20px;font-weight:700;color:'+dbCol+'">'+kpi.db_pct.toFixed(1)+'%</div><div style="font-size:11px;color:var(--ink3)">'+fmt(kpi.db_abs)+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--ink3)">Betriebsergebnis</div><div style="font-size:20px;font-weight:700;color:'+beCol+'">'+kpi.be_pct.toFixed(1)+'%</div><div style="font-size:11px;color:var(--ink3)">'+fmt(kpi.be_abs)+'</div></div>'
+      +'<div style="text-align:center"><div style="font-size:11px;color:var(--ink3)">Kalk. Gewinn</div><div style="font-size:20px;font-weight:700;color:'+gwCol+'">'+kpi.gewinn_pct.toFixed(1)+'%</div><div style="font-size:11px;color:var(--ink3)">'+fmt(kpi.gewinn_abs)+'</div></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">'
+      +'<div style="font-size:11px;color:var(--ink3)">Material: '+fmt(kpi.totalMat)+'<br><span style="font-weight:600">Quote '+kpi.matQuote.toFixed(1)+'%</span></div>'
+      +'<div style="font-size:11px;color:var(--ink3)">Lohn: '+kpi.totalH.toFixed(1)+'h × '+fmt(kpi.hr)+'<br><span style="font-weight:600">Quote '+kpi.lohnQuote.toFixed(1)+'%</span></div>'
+      +'<div style="font-size:11px;color:var(--ink3)">Selbstkosten<br><span style="font-weight:600">'+fmt(kpi.selbstkosten)+'</span></div>'
+      +'<div style="font-size:11px;color:var(--ink3)">Erlös<br><span style="font-weight:600">'+fmt(kpi.erloes)+'</span></div>'
+      +'</div>';
+
+    // Nachkalkulation (only if actual_hours present)
+    if(kpi.actualH){
+      var effCol=kpi.stundenEffizienz>=90?'var(--green)':kpi.stundenEffizienz>=75?'var(--amber)':'var(--red)';
+      html+='<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">'
+        +'<div style="font-size:12px;font-weight:600;margin-bottom:8px">Nachkalkulation</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+        +'<div style="font-size:11px;color:var(--ink3)">Ist-Stunden<br><span style="font-weight:600">'+kpi.actualH.toFixed(1)+'h</span> (Soll: '+kpi.totalH.toFixed(1)+'h)</div>'
+        +'<div style="font-size:11px;color:var(--ink3)">Stundeneffizienz<br><span style="font-weight:600;color:'+effCol+'">'+kpi.stundenEffizienz.toFixed(0)+'%</span></div>'
+        +'<div style="font-size:11px;color:var(--ink3)">Tats. Stundensatz<br><span style="font-weight:600">'+fmt(kpi.tatsStundensatz)+'/h</span></div>'
+        +'</div>';
+      if(kpi.mehraufwandWarning){
+        html+='<div class="alert-banner alert-amber" style="margin-top:8px;padding:8px 12px"><div><div class="alert-title" style="font-size:12px">Mehraufwand > 15%</div><div class="alert-sub" style="font-size:11px">'+fmt(kpi.mehraufwand)+' Mehrkosten ('+(kpi.actualH-kpi.totalH).toFixed(1)+'h über Soll)</div></div></div>';
+      }
+      html+='</div>';
+    }
+    html+='</div>';
+
+    // Collapsible Kalkulations-Parameter
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px">'
+      +'<div onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.cat-chevron\').classList.toggle(\'open\')" style="padding:14px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:12px;font-weight:600;color:var(--ink2)">Kalkulations-Parameter (Projekt-Override)</span><span class="cat-chevron">›</span></div>'
+      +'<div class="cat-body"><div style="padding:6px 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+      +'<div><label class="f-label">Stundensatz</label><div style="display:flex;gap:6px;align-items:center"><input type="number" step="1" class="f-input" style="width:100px" value="'+(cfg.custom_stundensatz!=null?cfg.custom_stundensatz:'')+'" placeholder="'+S.hourlyRate+'" oninput="S.cfg.custom_stundensatz=this.value===\'\'?null:parseFloat(this.value);scheduleAutoSave();renderUebersicht()"/><span style="font-size:11px;color:var(--ink3)">€/h</span></div></div>'
+      +'<div><label class="f-label">Material-GKZ</label><div style="display:flex;gap:6px;align-items:center"><input type="number" step="0.5" class="f-input" style="width:100px" value="'+(cfg.custom_mat_gkz_pct!=null?cfg.custom_mat_gkz_pct:'')+'" placeholder="'+S.matGkzPct+'" oninput="S.cfg.custom_mat_gkz_pct=this.value===\'\'?null:parseFloat(this.value);scheduleAutoSave();renderUebersicht()"/><span style="font-size:11px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">Fertigungs-GKZ</label><div style="display:flex;gap:6px;align-items:center"><input type="number" step="0.5" class="f-input" style="width:100px" value="'+(cfg.custom_fert_gkz_pct!=null?cfg.custom_fert_gkz_pct:'')+'" placeholder="'+S.fertGkzPct+'" oninput="S.cfg.custom_fert_gkz_pct=this.value===\'\'?null:parseFloat(this.value);scheduleAutoSave();renderUebersicht()"/><span style="font-size:11px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">W&G (BWL)</label><div style="display:flex;gap:6px;align-items:center"><input type="number" step="0.5" class="f-input" style="width:100px" value="'+(cfg.custom_wug_pct!=null?cfg.custom_wug_pct:'')+'" placeholder="'+S.wugPct+'" oninput="S.cfg.custom_wug_pct=this.value===\'\'?null:parseFloat(this.value);scheduleAutoSave();renderUebersicht()"/><span style="font-size:11px;color:var(--ink3)">%</span></div></div>'
+      +'</div><div style="padding:0 18px 14px;font-size:11px;color:var(--ink3)">Leer = globaler Wert gilt (aus Admin-Einstellungen)</div></div>'
+      +'</div>';
+
+    // Actual hours input (only for Abgeschlossen)
+    if(cfg.status==='Abgeschlossen'){
+      html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">'
+        +'<div><div style="font-size:12px;font-weight:600">Ist-Stunden (Clockodo)</div><div style="font-size:11px;color:var(--ink3)">Für Nachkalkulation: tatsächlich geleistete Stunden eintragen</div></div>'
+        +'<div style="display:flex;gap:6px;align-items:center"><input type="number" step="0.5" class="f-input" style="width:100px" value="'+(cfg.actual_hours||'')+'" placeholder="Stunden" oninput="S.cfg.actual_hours=this.value===\'\'?null:parseFloat(this.value);scheduleAutoSave();renderUebersicht()"/><span style="font-size:11px;color:var(--ink3)">h</span></div>'
+        +'</div>';
+    }
+
+    // Rabatt-Warnung
+    var dPct=parseFloat(cfg.configuration_discount_percent)||0;
+    if(dPct<0&&kpi.gewinn_pct<5){
+      html+='<div class="alert-banner alert-amber" style="margin-bottom:14px"><div><div class="alert-title">Rabatt drückt Gewinn</div><div class="alert-sub">'+Math.abs(dPct)+'% Rabatt → Kalk. Gewinn nur noch '+kpi.gewinn_pct.toFixed(1)+'%</div></div></div>';
+    }
+  }
 
   // Budget warning
   var projVal=t.total||(cfg.estimated_value||0);
@@ -2532,6 +2776,11 @@ async function saveConfig(){
     closed_at:cfg.closed_at||null,ball_at:cfg.ball_at||'uns',ball_since:cfg.ball_since||null,
     meeting_date:cfg.meeting_date||null,
     contact_subtype:cfg.contact_subtype||null,discard_reason:cfg.discard_reason||null,
+    actual_hours:cfg.actual_hours||null,
+    custom_stundensatz:cfg.custom_stundensatz!=null?cfg.custom_stundensatz:null,
+    custom_mat_gkz_pct:cfg.custom_mat_gkz_pct!=null?cfg.custom_mat_gkz_pct:null,
+    custom_fert_gkz_pct:cfg.custom_fert_gkz_pct!=null?cfg.custom_fert_gkz_pct:null,
+    custom_wug_pct:cfg.custom_wug_pct!=null?cfg.custom_wug_pct:null,
     version_number:newV,updated_at:new Date().toISOString(),
   });
   var res=await db.insert('versions',{configuration_id:cfg.id,version_number:newV,created_at:new Date().toISOString(),change_note:'Gespeichert'});
@@ -3133,6 +3382,10 @@ async function renderABody(){
     var hr=await db.getSetting('hourly_rate');
     var mm=await db.getSetting('material_markup');
     var pm=await db.getSetting('profit_margin');
+    var mgkz=await db.getSetting('mat_gkz_pct');
+    var fgkz=await db.getSetting('fert_gkz_pct');
+    var wugS=await db.getSetting('wug_pct');
+    var fkm=await db.getSetting('fixkosten_monat');
     el.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:16px">Preiskalkulation</div>'
       +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Alle Preise werden berechnet aus: <strong>Materialkosten netto</strong> \u00d7 (1 + Materialzuschlag) + <strong>Stunden</strong> \u00d7 Stundensatz netto, dann \u00d7 (1 + W&G) \u00d7 1,19 MwSt.</p>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">'
@@ -3144,6 +3397,19 @@ async function renderABody(){
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="pm-in" class="f-input" style="width:120px" value="'+(pm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
       +'<div><label class="f-label">Globaler Preisfaktor</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.01" id="pf-in" class="f-input" style="width:120px" value="'+(pf||'1.00')+'"/><span style="font-size:12px;color:var(--ink3)">\u00d7</span></div></div>'
+      +'</div>'
+      +'<div style="height:1px;background:var(--border);margin:24px 0"></div>'
+      +'<div style="font-size:15px;font-weight:700;margin-bottom:6px">BWL-Kalkulation</div>'
+      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Gemeinkosten-Zuschläge für die interne Kalkulation (Deckungsbeitrag, Betriebsergebnis, etc.). Können pro Projekt überschrieben werden.</p>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">'
+      +'<div><label class="f-label">Material-GKZ</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.5" id="mgkz-in" class="f-input" style="width:120px" value="'+(mgkz||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">Fertigungs-GKZ</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.5" id="fgkz-in" class="f-input" style="width:120px" value="'+(fgkz||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">Wagnis & Gewinn (BWL)</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.5" id="wug-in" class="f-input" style="width:120px" value="'+(wugS||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
+      +'<div><label class="f-label">Fixkosten / Monat</label>'
+      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="100" id="fkm-in" class="f-input" style="width:120px" value="'+(fkm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">\u20ac</span></div></div>'
       +'</div>'
       +'<button class="btn btn-primary" onclick="saveCalcSettings()" style="margin-top:16px">Alle speichern</button>'
       +'<div id="calc-preview" style="margin-top:20px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--ink2);max-width:500px">'
@@ -3260,12 +3526,18 @@ async function saveHR(){var v=$('hr-in').value;await db.setSetting('hourly_rate'
 async function saveCalcSettings(){
   var hr=clamp($('hr-in').value,10,500,85);var mm=clamp($('mm-in').value,0,100,0);
   var pm=clamp($('pm-in').value,0,50,0);var pf=clamp($('pf-in').value,0.5,2.0,1.0);
+  var mgkz=clamp($('mgkz-in').value,0,200,0);var fgkz=clamp($('fgkz-in').value,0,200,0);
+  var wugB=clamp($('wug-in').value,0,100,0);var fkm=clamp($('fkm-in').value,0,999999,0);
   $('hr-in').value=hr;$('mm-in').value=mm;$('pm-in').value=pm;$('pf-in').value=pf;
+  $('mgkz-in').value=mgkz;$('fgkz-in').value=fgkz;$('wug-in').value=wugB;$('fkm-in').value=fkm;
   await Promise.all([
     db.setSetting('hourly_rate',String(hr)),db.setSetting('material_markup',String(mm)),
-    db.setSetting('profit_margin',String(pm)),db.setSetting('price_adjustment_factor',String(pf))
+    db.setSetting('profit_margin',String(pm)),db.setSetting('price_adjustment_factor',String(pf)),
+    db.setSetting('mat_gkz_pct',String(mgkz)),db.setSetting('fert_gkz_pct',String(fgkz)),
+    db.setSetting('wug_pct',String(wugB)),db.setSetting('fixkosten_monat',String(fkm))
   ]);
   S.hourlyRate=hr;S.materialMarkup=mm;S.profitMargin=pm;S.priceFactor=pf;
+  S.matGkzPct=mgkz;S.fertGkzPct=fgkz;S.wugPct=wugB;S.fixkostenMonat=fkm;
   toast('Kalkulation gespeichert');updateCalcExample();
 }
 function updateCalcExample(){
@@ -3411,6 +3683,11 @@ async function autoSave(){
     meeting_date:cfg.meeting_date||null,
     contact_subtype:cfg.contact_subtype||null,
     discard_reason:cfg.discard_reason||null,
+    actual_hours:cfg.actual_hours||null,
+    custom_stundensatz:cfg.custom_stundensatz!=null?cfg.custom_stundensatz:null,
+    custom_mat_gkz_pct:cfg.custom_mat_gkz_pct!=null?cfg.custom_mat_gkz_pct:null,
+    custom_fert_gkz_pct:cfg.custom_fert_gkz_pct!=null?cfg.custom_fert_gkz_pct:null,
+    custom_wug_pct:cfg.custom_wug_pct!=null?cfg.custom_wug_pct:null,
     updated_at:new Date().toISOString(),
   });
   _dirty=false;
