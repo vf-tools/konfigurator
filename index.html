@@ -1149,6 +1149,18 @@ var db={
       if(res.error){console.error(res.error);return null}
       return _sb.storage.from('service-images').getPublicUrl(path).data.publicUrl;
     });
+  },
+  uploadOriginal:function(file,svcId){
+    if(DEMO||!_sb)return Promise.resolve();
+    var path='originals/svc-'+svcId+'.jpg';
+    return _sb.storage.from('service-images').upload(path,file,{upsert:true}).then(function(res){
+      if(res.error)console.error('Original upload:',res.error);
+      return res.error?null:_sb.storage.from('service-images').getPublicUrl(path).data.publicUrl;
+    });
+  },
+  getOriginalUrl:function(svcId){
+    if(DEMO||!_sb)return null;
+    return _sb.storage.from('service-images').getPublicUrl('originals/svc-'+svcId+'.jpg').data.publicUrl;
   }
 };
 
@@ -3332,6 +3344,7 @@ async function saveVeh(id){
 }
 
 var _pi=null;
+var _piOriginal=null; // Original file before crop, for re-cropping later
 var _autoSaveTimer=null;
 function scheduleAutoSave(){
   markDirty();
@@ -3363,7 +3376,7 @@ function editSvc(id){
   var co=S.cats.map(function(c){return'<option value="'+c.id+'"'+(c.id==s.category_id?' selected':'')+'>'+esc(c.name)+'</option>'}).join('');
   var so=S.subcats.filter(function(sc){return sc.category_id==(s.category_id||S.cats[0].id)}).map(function(sc){return'<option value="'+sc.id+'"'+(sc.id==s.subcategory_id?' selected':'')+'>'+esc(sc.name)+'</option>'}).join('');
   var uo=['Pauschal','St\u00fcck','Set','m','m\u00b2'].map(function(u){return'<option'+(u==(s.unit||'Pauschal')?' selected':'')+'>'+u+'</option>'}).join('');
-  var imgHtml=s.image_url?'<div class="img-prev-wrap"><img src="'+esc(s.image_url)+'"/><button class="img-del" onclick="clearImg('+(id||'null')+')">×</button></div><button class="btn btn-sm" style="margin-top:6px;font-size:11px" onclick="recropImg(\''+esc(s.image_url).replace(/'/g,"\\'")+'\')">Zuschneiden</button>':'';
+  var imgHtml=s.image_url?'<div class="img-prev-wrap"><img src="'+esc(s.image_url)+'"/><button class="img-del" onclick="clearImg('+(id||'null')+')">×</button></div><button class="btn btn-sm" style="margin-top:6px;font-size:11px" onclick="recropImg('+(id||'null')+')">Zuschneiden</button>':'';
   openModal(id?'Leistung bearbeiten':'Neue Leistung',true,
     '<div class="mform">'
     +'<div class="full"><label class="f-label">Name</label><input class="f-input" id="es-n" value="'+esc(s.name||'')+'"/></div>'
@@ -3406,17 +3419,28 @@ function updateSubOpts(catId){
 }
 var _cropImg=null,_cropOffX=0,_cropOffY=0,_cropDrag=false,_cropStartX=0,_cropStartY=0,_cropFile=null;
 
-function recropImg(url){
-  _cropImg=new Image();
-  _cropImg.crossOrigin='anonymous';
-  _cropImg.onload=function(){
-    // Create a fake file for the crop flow
-    var cv=document.createElement('canvas');cv.width=_cropImg.width;cv.height=_cropImg.height;
-    cv.getContext('2d').drawImage(_cropImg,0,0);
-    cv.toBlob(function(blob){_cropFile=new File([blob],'recrop.jpg',{type:'image/jpeg'});openCrop()},'image/jpeg',0.95);
-  };
-  _cropImg.onerror=function(){toast('Bild konnte nicht geladen werden')};
-  _cropImg.src=url;
+function recropImg(svcId){
+  var svc=svcId?(S.services.length?S.services:DB.services).find(function(x){return x.id==svcId}):null;
+  if(!svc||!svc.image_url){toast('Kein Bild vorhanden');return}
+  // Try to load original first, fallback to cropped
+  var origUrl=db.getOriginalUrl(svcId);
+  var fallbackUrl=svc.image_url;
+
+  function loadAndCrop(url,isFallback){
+    _cropImg=new Image();
+    _cropImg.crossOrigin='anonymous';
+    _cropImg.onload=function(){
+      var cv=document.createElement('canvas');cv.width=_cropImg.width;cv.height=_cropImg.height;
+      cv.getContext('2d').drawImage(_cropImg,0,0);
+      cv.toBlob(function(blob){_cropFile=new File([blob],'recrop.jpg',{type:'image/jpeg'});openCrop()},'image/jpeg',0.95);
+    };
+    _cropImg.onerror=function(){
+      if(!isFallback&&fallbackUrl){loadAndCrop(fallbackUrl,true)}
+      else{toast('Bild konnte nicht geladen werden')}
+    };
+    _cropImg.src=url+'?t='+Date.now(); // cache-bust
+  }
+  loadAndCrop(origUrl||fallbackUrl,!origUrl);
 }
 function onImgPick(evt){
   var file=evt.target.files[0];if(!file)return;
@@ -3579,8 +3603,10 @@ function confirmCrop(){
   out.toBlob(function(blob){
     var url=out.toDataURL('image/jpeg',0.88);
     _pi={file:new File([blob],(_cropFile.name||'image').replace(/\.[^.]+$/,'.jpg'),{type:'image/jpeg'}),url:url};
+    // Keep original file for uploading alongside cropped version
+    _piOriginal=_cropFile;
     var prev=$('img-prev');
-    if(prev)prev.innerHTML='<div class="img-prev-wrap"><img src="'+url+'"/><button class="img-del" onclick="_pi=null;document.getElementById(\'img-prev\').innerHTML=\'\'">×</button></div>';
+    if(prev)prev.innerHTML='<div class="img-prev-wrap"><img src="'+url+'"/><button class="img-del" onclick="_pi=null;_piOriginal=null;document.getElementById(\'img-prev\').innerHTML=\'\'">×</button></div>';
     toast('Bild zugeschnitten ✓ ('+origKb+'kb → '+Math.round(blob.size/1024)+'kb)');
     document.getElementById('crop-wrap').style.display='none';
     var cv2=document.getElementById('crop-canvas');if(cv2._cleanup)cv2._cleanup();
@@ -3594,7 +3620,12 @@ async function clearImg(svcId){
 async function saveSvc(id){
   if(!requireName($('es-n').value)){toast('Name darf nicht leer sein');return}
   var imageUrl;
-  if(_pi){toast('Bild wird hochgeladen \u2026');imageUrl=await db.uploadImage(_pi.file,id||'new')}
+  if(_pi){
+    toast('Bild wird hochgeladen \u2026');
+    imageUrl=await db.uploadImage(_pi.file,id||'new');
+    if(_piOriginal&&id)await db.uploadOriginal(_piOriginal,id);
+    _piOriginal=null;
+  }
   var subcatId=parseInt($('es-sc').value)||null;
   var d={name:$('es-n').value.trim(),category_id:parseInt($('es-c').value),subcategory_id:subcatId,
     unit:$('es-u').value,base_price:clamp($('es-p').value,0,999999,0),sort_order:clamp($('es-s').value,1,999,99),
@@ -3713,6 +3744,8 @@ async function bulkImgUpload(){
     var it=valid[i];
     prog.textContent=(i+1)+' von '+valid.length+'\u2026';
     try{
+      // Upload original for later re-cropping
+      await db.uploadOriginal(it.file,it.svcId);
       var cropped=await autoCrop21(it.file);
       var url=await db.uploadImage(cropped,it.svcId);
       if(url){
