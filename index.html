@@ -927,9 +927,10 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
         <select class="sb-sel" id="sb-veh-sel" onchange="onVehicleChange(this.value);scheduleAutoSave()"></select>
         <div class="sb-lbl">Status</div>
         <select class="sb-sel" id="sb-status" onchange="onStatusChange(this.value);scheduleAutoSave()">
-          <option>Entwurf</option><option>Erstgespräch</option><option>Nachbearbeitung</option>
-          <option>an Kunden gesendet</option><option>abgeschlossen</option><option>verworfen</option>
+          <option>Neu</option><option>In Kontakt</option><option>Qualifizierung</option>
+          <option>Konzept &amp; Folgetermin</option><option>Angebot versendet</option><option>Abgeschlossen</option><option>Verworfen</option>
         </select>
+        <div id="sb-status-extra"></div>
         <div class="sb-lbl">Gewinnwahrscheinlichkeit</div>
         <div class="prob-row">
           <input type="range" min="0" max="100" step="5" class="prob-slider" id="prob-slider" oninput="S.cfg.win_probability=parseInt(this.value);document.getElementById(&#39;prob-val&#39;).textContent=this.value+&#39;%&#39;;scheduleAutoSave()">
@@ -1159,11 +1160,14 @@ var esc=function(s){var d=document.createElement('div');d.textContent=String(s||
 var $=function(id){return document.getElementById(id)};
 var todayStr=function(){return new Date().toISOString().slice(0,10)};
 
-var SCOL={'Entwurf':'#a8a89e','Erstgespräch':'#1d4ed8','Nachbearbeitung':'#8a6000','an Kunden gesendet':'#1a7a3a','abgeschlossen':'#111110','verworfen':'#c0392b'};
-var PIPELINE_STATUSES=['Entwurf','Erstgespräch','Nachbearbeitung','an Kunden gesendet','abgeschlossen'];
-// Default win probabilities per status
-var STATUS_PROB={'Entwurf':10,'Erstgespräch':30,'Nachbearbeitung':60,'an Kunden gesendet':75,'abgeschlossen':100,'verworfen':0};
-var ACT_ICONS={'Anruf':'📞','E-Mail gesendet':'✉️','Angebot gesendet':'📄','Treffen':'🤝','Nachricht gesendet':'💬','Rückruf erhalten':'📲','E-Mail erhalten':'📩','Anfrage eingegangen':'📨','Notiz':'📝','Sonstiges':'📌'};
+var SCOL={'Neu':'#a8a89e','In Kontakt':'#1d4ed8','Qualifizierung':'#6a4ec0','Konzept & Folgetermin':'#8a6000','Angebot versendet':'#1a7a3a','Abgeschlossen':'#111110','Verworfen':'#c0392b'};
+var PIPELINE_STATUSES=['Neu','In Kontakt','Qualifizierung','Konzept & Folgetermin','Angebot versendet'];
+var ALL_STATUSES=['Neu','In Kontakt','Qualifizierung','Konzept & Folgetermin','Angebot versendet','Abgeschlossen','Verworfen'];
+var STATUS_PROB={'Neu':5,'In Kontakt':15,'Qualifizierung':35,'Konzept & Folgetermin':55,'Angebot versendet':75,'Abgeschlossen':100,'Verworfen':0};
+var CONTACT_SUBTYPES=['Mail gesendet','Termin vereinbart'];
+var DISCARD_REASONS=['Budget nicht passend','Kein Interesse','Keine Reaktion','Anderer Anbieter','Sonstiges'];
+var SOURCES=['Google','Instagram','YouTube','Messe','Empfehlung','Stammkunde','Sonstiges'];
+var ACT_ICONS={'Anruf':'\ud83d\udcde','E-Mail gesendet':'\u2709\ufe0f','Angebot gesendet':'\ud83d\udcc4','Treffen':'\ud83e\udd1d','Nachricht gesendet':'\ud83d\udcac','R\u00fcckruf erhalten':'\ud83d\udcf2','E-Mail erhalten':'\ud83d\udce9','Anfrage eingegangen':'\ud83d\udce8','Notiz':'\ud83d\udcdd','Sonstiges':'\ud83d\udccc','Nachgefasst':'\ud83d\udd04'};
 var BALL_OUTGOING=['Anruf','E-Mail gesendet','Angebot gesendet','Treffen','Nachricht gesendet'];
 var BALL_INCOMING=['Rückruf erhalten','E-Mail erhalten','Anfrage eingegangen'];
 var ICO={1:'🏗',2:'🏗',3:'🔋',4:'🔋',5:'☀️',6:'⚡',7:'🪵',8:'🪵',9:'🛏',10:'🍳',11:'🍳',12:'🔥',13:'💧',14:'🚿',15:'🪟',16:'🪟',17:'💡',18:'💡',19:'📷'};
@@ -1303,7 +1307,7 @@ function configWinProb(cfg){
 async function checkBallReset(configs){
   var today=todayStr();
   configs.forEach(function(c){
-    if(c.status==='abgeschlossen'||c.status==='verworfen')return;
+    if(c.status==='Abgeschlossen'||c.status==='Verworfen')return;
     if(c.ball_at==='kunde'&&c.ball_since){
       var daysSince=Math.floor((new Date(today)-new Date(c.ball_since))/86400000);
       var hasUpcoming=(c.followup_date&&c.followup_date>=today)||(c.meeting_date&&c.meeting_date>=today);
@@ -1414,11 +1418,11 @@ async function renderHome(){
     var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
     return s+configTotal(c,items,attrs);
   },0);
-  var open=S.configs.filter(function(c){return c.status==='Entwurf'||c.status==='Erstgespräch'});
+  var open=S.configs.filter(function(c){return c.status==='Neu'||c.status==='In Kontakt'});
 
   $('home-stats').innerHTML=
     '<div class="home-card"><div class="home-card-title">Pipeline</div><div class="home-stat">'+fmtK(pipeVal)+' \u20ac</div><div class="home-stat-sub">'+pipeline.length+' offene Projekte</div></div>'
-    +'<div class="home-card"><div class="home-card-title">Neue Anfragen</div><div class="home-stat">'+open.length+'</div><div class="home-stat-sub">Entwurf & Erstgespräch</div></div>'
+    +'<div class="home-card"><div class="home-card-title">Neue Anfragen</div><div class="home-stat">'+open.length+'</div><div class="home-stat-sub">Neu & In Kontakt</div></div>'
     +'<div class="home-card"><div class="home-card-title">Alle Konfigurationen</div><div class="home-stat">'+active.length+'</div><div class="home-stat-sub">aktive Projekte</div></div>'
     +'<div class="home-card"><div class="home-card-title">Heute</div><div class="home-stat">'+new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})+'</div><div class="home-stat-sub">'+new Date().toLocaleDateString('de-DE',{weekday:'long'})+'</div></div>';
 
@@ -1488,7 +1492,7 @@ async function renderConfigs(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
   var t=S.configs.length;
-  var o=S.configs.filter(function(c){return c.status==='Entwurf'||c.status==='Erstgespräch'}).length;
+  var o=S.configs.filter(function(c){return c.status==='Neu'||c.status==='In Kontakt'}).length;
   $('configs-sub').textContent=t?t+' Konfiguration'+(t!==1?'en':'')+' \u00b7 '+o+' offen':'';
   renderConfigList('');
 }
@@ -1502,7 +1506,7 @@ function renderConfigList(q){
     return '<div class="config-card" onclick="openConfig('+c.id+')">'
       +'<div><div class="card-name">'+esc(c.customer_name)+'</div>'
       +'<div class="card-sub">'+esc(c.vehicle_name||'\u2014')+' &middot; v'+(c.version_number||1)+' &middot; '+esc(c.time_horizon||'\u2014')+'</div></div>'
-      +'<span class="badge" style="background:'+(SCOL[c.status]||'#888')+'15;color:'+(SCOL[c.status]||'#888')+'">'+esc(c.status||'Entwurf')+'</span>'
+      +'<span class="badge" style="background:'+(SCOL[c.status]||'#888')+'15;color:'+(SCOL[c.status]||'#888')+'">'+esc(c.status||'Neu')+'</span>'
       +'</div>';
   }).join('');
 }
@@ -1516,7 +1520,7 @@ async function renderPipeline(){
   var today=todayStr();
 
   var pipeline=S.configs.filter(function(c){return c.status!=='verworfen'&&c.status!=='abgeschlossen'});
-  var won=S.configs.filter(function(c){return c.status==='abgeschlossen'});
+  var won=S.configs.filter(function(c){return c.status==='Abgeschlossen'});
   var pipeVal=pipeline.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
     var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
@@ -1544,19 +1548,29 @@ async function renderPipeline(){
       var val=configTotal(c,items,attrs);
       var prob=configWinProb(c);
       var tag='';
+      var ampel='';
       var lastAct='';
+      var subBadge=c.contact_subtype&&c.status==='In Kontakt'?'<div style="font-size:9px;color:var(--ink3);margin-bottom:3px">'+esc(c.contact_subtype)+'</div>':'';
       if(c.last_activity_note){
         var daysAgo=c.last_activity_at?Math.floor((Date.now()-new Date(c.last_activity_at))/86400000):null;
         var dStr=daysAgo===0?'heute':daysAgo===1?'gestern':daysAgo?'vor '+daysAgo+' Tagen':'';
         lastAct='<div style="font-size:10px;color:var(--ink3);margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+esc(c.last_activity_note.substring(0,50))+(dStr?' &middot; '+dStr:'')+'</div>';
       }
-      if(c.meeting_date&&c.meeting_date>=today){
-        tag='<div class="kcard-tag" style="background:#eef3ec;color:#14301b">📅 Termin: '+new Date(c.meeting_date).toLocaleDateString('de-DE',{day:'2-digit',month:'short'})+'</div>';
-      } else if(c.followup_date){
+      // Wiedervorlage-Ampel
+      if(c.followup_date){
         var fd=c.followup_date;
-        if(fd<today)tag='<div class="kcard-tag tag-overdue">\u21a9 Überfällig</div>';
-        else if(fd===today)tag='<div class="kcard-tag tag-today">\u21a9 Heute</div>';
-        else tag='<div class="kcard-tag tag-soon">\u21a9 '+new Date(fd).toLocaleDateString('de-DE',{day:'2-digit',month:'short'})+'</div>';
+        var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);var tomorrowStr=tomorrow.toISOString().slice(0,10);
+        if(fd<today)ampel='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:5px" title="Überfällig: '+fd+'"></span>';
+        else if(fd===today||fd===tomorrowStr)ampel='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:5px" title="Heute/Morgen: '+fd+'"></span>';
+        else ampel='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4caf50;margin-right:5px" title="'+fd+'"></span>';
+      }
+      if(c.meeting_date&&c.meeting_date>=today){
+        tag='<div class="kcard-tag" style="background:#eef3ec;color:#14301b">\ud83d\udcc5 Termin: '+new Date(c.meeting_date).toLocaleDateString('de-DE',{day:'2-digit',month:'short'})+'</div>';
+      } else if(c.followup_date){
+        var fd2=c.followup_date;
+        if(fd2<today)tag='<div class="kcard-tag tag-overdue">\u21a9 \u00dcberf\u00e4llig</div>';
+        else if(fd2===today)tag='<div class="kcard-tag tag-today">\u21a9 Heute</div>';
+        else tag='<div class="kcard-tag tag-soon">\u21a9 '+new Date(fd2).toLocaleDateString('de-DE',{day:'2-digit',month:'short'})+'</div>';
       }
       var phone=c.phone?'<div class="kcard-phone">'+esc(c.phone)+'</div>':'';
       var ballAt=c.ball_at||'uns';
@@ -1564,7 +1578,8 @@ async function renderPipeline(){
       var ballOverdue=ballAt==='kunde'&&ballDays>=5&&!(c.followup_date&&c.followup_date>todayStr());
       var ballBadge='<div class="ball-badge '+(ballOverdue?'ball-overdue':ballAt==='uns'?'ball-us':'ball-kunde')+'">'+(ballAt==='uns'?'&#9679; Bei uns':'&#9679; Beim Kunden'+(ballOverdue?' · '+ballDays+'d':''))+'</div>';
       return '<div class="kcard" onclick="openConfig('+c.id+')">'
-        +'<div class="kcard-name">'+esc(c.customer_name)+'</div>'
+        +'<div class="kcard-name">'+ampel+esc(c.customer_name)+'</div>'
+        +subBadge
         +'<div class="kcard-veh">'+esc(c.vehicle_name||'\u2014')+'</div>'
         +phone
         +ballBadge
@@ -1613,7 +1628,7 @@ async function renderReview(){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
     var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
     var val=configTotal(c,items,attrs);
-    if(c.status==='abgeschlossen'){
+    if(c.status==='Abgeschlossen'){
       // Use closed_at for won deals, fall back to updated_at
       var wonDate=new Date(c.closed_at||c.updated_at||c.created_at||Date.now());
       var bkt=buckets.find(function(b){return b.year===wonDate.getFullYear()&&b.month===wonDate.getMonth()});
@@ -1680,7 +1695,7 @@ async function renderReview(){
   }).join('');
 
   // KPI calculations
-  var wonConfigs=S.configs.filter(function(c){return c.status==='abgeschlossen'&&(!filterSrc||c.customer_source===filterSrc)});
+  var wonConfigs=S.configs.filter(function(c){return c.status==='Abgeschlossen'&&(!filterSrc||c.customer_source===filterSrc)});
   var wonVals=wonConfigs.map(function(c){var items=allItems.filter(function(i){return i.configuration_id===c.id});var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});return configTotal(c,items,attrs)}).filter(function(v){return v>0});
   var avgWonVal=wonVals.length?wonVals.reduce(function(a,b){return a+b},0)/wonVals.length:0;
   var closeTimes=wonConfigs.filter(function(c){return c.closed_at&&c.created_at}).map(function(c){return Math.floor((new Date(c.closed_at)-new Date(c.created_at))/86400000)}).filter(function(d){return d>=0});
@@ -1702,7 +1717,7 @@ async function renderReview(){
     var srcRows=allSources.map(function(src){
       var srcConfs=periodConfigs.filter(function(c){return c.customer_source===src});
       var total=srcConfs.length;
-      var wonConfs=srcConfs.filter(function(c){return c.status==='abgeschlossen'});
+      var wonConfs=srcConfs.filter(function(c){return c.status==='Abgeschlossen'});
       var won=wonConfs.length;
       var conv=total?Math.round(won/total*100):0;
       var wonVal=wonConfs.reduce(function(s,c){var it=allItems.filter(function(i){return i.configuration_id===c.id});var at=allAttrs.filter(function(a){return a.configuration_id===c.id});return s+configTotal(c,it,at)},0);
@@ -1724,17 +1739,52 @@ async function renderReview(){
     +'<div class="review-tbl"><table><thead><tr><th>Monat</th><th>Anz.</th><th>Pipeline €</th><th>Gewichtet €</th><th>Gewonnen</th><th>Gewonnen €</th><th>Conv. Anz.</th><th>Conv. \u20ac</th></tr></thead>'
     +'<tbody>'+(tableRows||'<tr><td colspan="6" style="text-align:center;color:var(--ink3);padding:24px">Keine Daten</td></tr>')+'</tbody></table></div>'
     +kpiHtml
-    +sourceHtml;
+    +sourceHtml
+    +buildDiscardTable(periodConfigs)
+    +buildStageTimesTable(periodConfigs);
+}
+
+function buildDiscardTable(configs){
+  var discarded=configs.filter(function(c){return c.status==='Verworfen'});
+  if(!discarded.length)return '';
+  var reasons={};
+  discarded.forEach(function(c){var r=c.discard_reason||'Unbekannt';reasons[r]=(reasons[r]||0)+1});
+  var rows=Object.keys(reasons).sort(function(a,b){return reasons[b]-reasons[a]}).map(function(r){
+    return '<tr><td style="font-weight:500">'+esc(r)+'</td><td style="text-align:center">'+reasons[r]+'</td><td style="text-align:center">'+Math.round(reasons[r]/discarded.length*100)+'%</td></tr>';
+  }).join('');
+  return '<div style="margin-top:20px"><div class="section-lbl" style="margin-bottom:8px">Verlustgr\u00fcnde ('+discarded.length+' verworfen)</div>'
+    +'<div class="review-tbl"><table><thead><tr><th>Grund</th><th>Anzahl</th><th>Anteil</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+function buildStageTimesTable(configs){
+  // Calculate average days in each status from activities
+  var allActs=[];
+  var ids=configs.map(function(c){return c.id});
+  // We need activities — load them if not cached
+  // For now, use configs with status change timestamps from activities
+  var stages=ALL_STATUSES.filter(function(s){return s!=='Verworfen'});
+  // Simple approach: use created_at → updated_at as proxy
+  var completed=configs.filter(function(c){return c.status==='Abgeschlossen'&&c.created_at&&c.closed_at});
+  if(!completed.length)return '';
+  var avgDays=completed.map(function(c){return Math.floor((new Date(c.closed_at)-new Date(c.created_at))/86400000)});
+  var avg=Math.round(avgDays.reduce(function(a,b){return a+b},0)/avgDays.length);
+  return '<div style="margin-top:20px"><div class="section-lbl" style="margin-bottom:8px">\u00d8 Durchlaufzeit</div>'
+    +'<div class="review-tbl"><table><thead><tr><th>Metrik</th><th>Wert</th></tr></thead><tbody>'
+    +'<tr><td>Anzahl abgeschlossene Projekte</td><td style="font-weight:600">'+completed.length+'</td></tr>'
+    +'<tr><td>\u00d8 Tage von Erstellung bis Abschluss</td><td style="font-weight:600">'+avg+' Tage</td></tr>'
+    +'<tr><td>Schnellstes Projekt</td><td>'+Math.min.apply(null,avgDays)+' Tage</td></tr>'
+    +'<tr><td>L\u00e4ngstes Projekt</td><td>'+Math.max.apply(null,avgDays)+' Tage</td></tr>'
+    +'</tbody></table></div></div>';
 }
 
 // ─── NEW CONFIG ───────────────────────────────────────────────────────────────
-function showNewConfig(){showNewConfigWithStatus('Entwurf')}
+function showNewConfig(){showNewConfigWithStatus('Neu')}
 function showNewConfigWithStatus(status){
   var vehOpts=S.vehicles.map(function(v){return '<option value="'+v.id+'">'+esc(v.name)+'</option>'}).join('');
   var html='<div class="mform">'
     +'<div class="full"><label class="f-label">Kundenname *</label><input class="f-input" id="nc-n" placeholder="Firma oder Name"/></div>'
     +'<div><label class="f-label">Fahrzeugmodell</label><select class="f-input" id="nc-v"><option value="">\u2014 w\u00e4hlen \u2014</option>'+vehOpts+'</select></div>'
-    +'<div><label class="f-label">Quelle</label><input class="f-input" id="nc-s" placeholder="Messe, Empfehlung \u2026"/></div>'
+    +'<div><label class="f-label">Quelle</label><select class="f-input" id="nc-s" onchange="var o=$(\'nc-s-other\');if(o)o.style.display=this.value===\'Sonstiges\'?\'\':\'none\'"><option value="">\u2014 w\u00e4hlen \u2014</option>'+SOURCES.map(function(s){return '<option>'+s+'</option>'}).join('')+'</select><input class="f-input" id="nc-s-other" placeholder="Quelle eingeben\u2026" style="display:none;margin-top:6px"/></div>'
     +'<div><label class="f-label">Zeithorizont</label><input class="f-input" id="nc-t" placeholder="Q2 2025"/></div>'
     +'<div><label class="f-label">Telefon</label><input class="f-input" id="nc-ph" placeholder="+49 \u2026"/></div>'
     +'<div><label class="f-label">E-Mail</label><input class="f-input" id="nc-em" placeholder="name@firma.de"/></div>'
@@ -1756,8 +1806,8 @@ async function doCreate(status){
   var veh=S.vehicles.find(function(v){return v.id===vehId});
   var defaultProb=STATUS_PROB[status]||10;
   var res=await db.insert('configurations',{
-    customer_name:name,customer_source:$('nc-s').value,time_horizon:$('nc-t').value,
-    vehicle_model_id:vehId,vehicle_name:veh?veh.name:'',status:status||'Entwurf',
+    customer_name:name,customer_source:$('nc-s').value==='Sonstiges'?($('nc-s-other').value||'Sonstiges'):$('nc-s').value,time_horizon:$('nc-t').value,
+    vehicle_model_id:vehId,vehicle_name:veh?veh.name:'',status:status||'Neu',
     version_number:1,configuration_discount_percent:0,notes:'',
     win_probability:defaultProb,followup_date:$('nc-f').value||null,
     phone:$('nc-ph').value||'',email:$('nc-em').value||'',
@@ -1807,7 +1857,7 @@ function renderSidebar(){
   $('sb-contact').innerHTML=contact;
   $('sb-veh-sel').innerHTML='<option value="">\u2014 Fahrzeug w\u00e4hlen \u2014</option>'+
     S.vehicles.map(function(v){return'<option value="'+v.id+'"'+(v.id==cfg.vehicle_model_id?' selected':'')+'>'+esc(v.name)+'</option>'}).join('');
-  $('sb-status').value=cfg.status||'Entwurf';
+  $('sb-status').value=cfg.status||'Neu';
   $('prob-slider').value=cfg.win_probability!=null?cfg.win_probability:STATUS_PROB[cfg.status]||10;
   $('prob-val').textContent=(cfg.win_probability!=null?cfg.win_probability:STATUS_PROB[cfg.status]||10)+'%';
   $('followup-date').value=cfg.followup_date||'';
@@ -1815,6 +1865,7 @@ function renderSidebar(){
   updateBallUI();
   $('proj-note').value=cfg.notes||'';
   updatePrices();
+  renderStatusExtra();
 }
 
 function updatePrices(){
@@ -1839,23 +1890,72 @@ function onVehicleChange(id){
 }
 
 function onStatusChange(newStatus){
+  var oldStatus=S.cfg.status;
   S.cfg.status=newStatus;
-  // Set closed_at when deal is won
-  if(newStatus==='abgeschlossen'&&!S.cfg.closed_at){
-    S.cfg.closed_at=new Date().toISOString();
-  } else if(newStatus!=='abgeschlossen'){
-    S.cfg.closed_at=null;
-  }
-  // Auto-update probability if it matches the old status default
-  var oldDefault=STATUS_PROB[S.cfg.status]||10;
+  if(newStatus==='Abgeschlossen'&&!S.cfg.closed_at){S.cfg.closed_at=new Date().toISOString()}
+  else if(newStatus!=='Abgeschlossen'){S.cfg.closed_at=null}
+  var oldDefault=STATUS_PROB[oldStatus]||10;
   var currentProb=S.cfg.win_probability!=null?S.cfg.win_probability:oldDefault;
   var newDefault=STATUS_PROB[newStatus]||10;
-  var isDefault=Object.values(STATUS_PROB).indexOf(currentProb)>=0;
-  if(isDefault){
-    S.cfg.win_probability=newDefault;
-    $('prob-slider').value=newDefault;
-    $('prob-val').textContent=newDefault+'%';
+  if(Object.values(STATUS_PROB).indexOf(currentProb)>=0){
+    S.cfg.win_probability=newDefault;$('prob-slider').value=newDefault;$('prob-val').textContent=newDefault+'%';
   }
+  if(oldStatus&&oldStatus!==newStatus){
+    db.insert('activities',{configuration_id:S.cfg.id,type:'Notiz',note:'Status: '+oldStatus+' \u2192 '+newStatus,created_at:new Date().toISOString()});
+  }
+  renderStatusExtra();
+}
+function renderStatusExtra(){
+  var el=$('sb-status-extra');if(!el)return;
+  var s=S.cfg.status;
+  if(s==='In Kontakt'){
+    el.innerHTML='<div class="sb-lbl" style="margin-top:8px">Kontaktart</div>'
+      +'<select class="sb-sel" id="sb-contact-sub" onchange="onContactSubChange(this.value)">'
+      +'<option value="">\u2014 w\u00e4hlen \u2014</option>'
+      +CONTACT_SUBTYPES.map(function(t){return '<option'+(S.cfg.contact_subtype===t?' selected':'')+'>'+t+'</option>'}).join('')
+      +'</select>';
+  } else if(s==='Verworfen'){
+    el.innerHTML='<div class="sb-lbl" style="margin-top:8px">Verwerfungsgrund</div>'
+      +'<select class="sb-sel" id="sb-discard-reason" onchange="onDiscardReason(this.value)">'
+      +'<option value="">\u2014 w\u00e4hlen \u2014</option>'
+      +DISCARD_REASONS.map(function(r){return '<option'+(S.cfg.discard_reason===r?' selected':'')+'>'+r+'</option>'}).join('')
+      +'</select>';
+  } else {
+    el.innerHTML='';
+  }
+  renderFollowupButton();
+}
+function onContactSubChange(val){
+  S.cfg.contact_subtype=val;
+  if(val==='Mail gesendet'){
+    var d=new Date();d.setDate(d.getDate()+7);var fd=d.toISOString().slice(0,10);
+    S.cfg.followup_date=fd;$('followup-date').value=fd;
+    toast('Wiedervorlage +7 Tage gesetzt');
+  }
+  scheduleAutoSave();
+}
+function onDiscardReason(val){
+  S.cfg.discard_reason=val;
+  if(val){db.insert('activities',{configuration_id:S.cfg.id,type:'Notiz',note:'Verworfen: '+val,created_at:new Date().toISOString()})}
+  scheduleAutoSave();
+}
+function renderFollowupButton(){
+  var wrap=$('sb-followup-btn');
+  if(!wrap){var p=$('sb-status-extra');if(!p)return;var d=document.createElement('div');d.id='sb-followup-btn';p.parentNode.insertBefore(d,p.nextSibling);wrap=d}
+  var s=S.cfg.status;
+  if(s==='In Kontakt'||s==='Angebot versendet'){
+    wrap.innerHTML='<div class="sb-lbl" style="margin-top:10px">Nachfassen</div>'
+      +'<div style="display:flex;gap:5px">'
+      +'<button class="btn btn-sm" onclick="nachfassen(3)" style="flex:1">+3d</button>'
+      +'<button class="btn btn-sm" onclick="nachfassen(7)" style="flex:1">+7d</button>'
+      +'<button class="btn btn-sm" onclick="nachfassen(14)" style="flex:1">+14d</button></div>';
+  } else {wrap.innerHTML=''}
+}
+function nachfassen(days){
+  var d=new Date();d.setDate(d.getDate()+days);var fd=d.toISOString().slice(0,10);
+  S.cfg.followup_date=fd;$('followup-date').value=fd;
+  db.insert('activities',{configuration_id:S.cfg.id,type:'Nachgefasst',note:'Wiedervorlage +'+days+' Tage',created_at:new Date().toISOString()}).then(function(r){if(r.data)S.activities.unshift(r.data)});
+  scheduleAutoSave();toast('Wiedervorlage: '+new Date(fd).toLocaleDateString('de-DE'));
 }
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
@@ -1891,7 +1991,7 @@ function renderUebersicht(){
   if(cfg.phone)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Telefon</span><a href="tel:'+esc(cfg.phone)+'" style="font-weight:500;color:var(--blue);text-decoration:none">'+esc(cfg.phone)+'</a></div>';
   if(cfg.email)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">E-Mail</span><a href="mailto:'+esc(cfg.email)+'" style="font-weight:500;color:var(--blue);text-decoration:none">'+esc(cfg.email)+'</a></div>';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Version</span><span style="font-weight:500">v'+(cfg.version_number||1)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span style="color:var(--ink2)">Status</span><span class="badge" style="background:'+scol+'15;color:'+scol+'">'+esc(cfg.status||'Entwurf')+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span style="color:var(--ink2)">Status</span><span class="badge" style="background:'+scol+'15;color:'+scol+'">'+esc(cfg.status||'Neu')+'</span></div>';
   html+='</div></div>';
 
   // Numbers card
@@ -1905,6 +2005,12 @@ function renderUebersicht(){
   if(cfg.followup_date)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wiedervorlage</span><span style="font-weight:500;color:'+(cfg.followup_date<today?'var(--red)':cfg.followup_date===today?'var(--amber)':'var(--ink)')+'">'+new Date(cfg.followup_date).toLocaleDateString('de-DE')+'</span></div>';
   html+='</div></div>';
   html+='</div>';
+
+  // Budget warning
+  var projVal=t.total||(cfg.estimated_value||0);
+  if(projVal>0&&projVal<80000){
+    html+='<div class="alert-banner alert-amber" style="margin-bottom:14px"><div><div class="alert-title">Projektwert unter Mindestbudget</div><div class="alert-sub">Aktuell '+fmt(projVal)+' \u2014 Mindestbudget 80.000 \u20ac</div></div></div>';
+  }
 
   // Ball status
   var ballOverdue=ballAt==='kunde'&&ballDays>=5&&!(cfg.followup_date&&cfg.followup_date>=today);
@@ -2330,7 +2436,8 @@ function renderKopfdaten(){
     +'<div class="full"><label class="f-label">Kundenname *</label><input class="f-input" value="'+esc(cfg.customer_name||'')+'" oninput="S.cfg.customer_name=this.value;$(\'sb-name\').textContent=this.value"/></div>'
     +'<div><label class="f-label">Telefon</label><input class="f-input" value="'+esc(cfg.phone||'')+'" oninput="S.cfg.phone=this.value;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">E-Mail</label><input class="f-input" value="'+esc(cfg.email||'')+'" oninput="S.cfg.email=this.value;scheduleAutoSave()"/></div>'
-    +'<div><label class="f-label">Quelle</label><input class="f-input" value="'+esc(cfg.customer_source||'')+'" oninput="S.cfg.customer_source=this.value;scheduleAutoSave()"/></div>'
+    +'<div><label class="f-label">Quelle</label><select class="f-input" onchange="S.cfg.customer_source=this.value===\'Sonstiges\'?($(\'kd-src-other\')||{}).value||\'Sonstiges\':this.value;var o2=$(\'kd-src-other\');if(o2)o2.style.display=this.value===\'Sonstiges\'?\'\':\'none\';scheduleAutoSave()"><option value="">\u2014</option>'+SOURCES.map(function(s){return '<option'+(s===(cfg.customer_source||'')||(!SOURCES.includes(cfg.customer_source)&&s==='Sonstiges'&&cfg.customer_source)?' selected':'')+'>'+s+'</option>'}).join('')+'</select>'
+    +(cfg.customer_source&&SOURCES.indexOf(cfg.customer_source)<0?'<input class="f-input" id="kd-src-other" value="'+esc(cfg.customer_source)+'" style="margin-top:6px" oninput="S.cfg.customer_source=this.value;scheduleAutoSave()"/>':'<input class="f-input" id="kd-src-other" placeholder="Quelle\u2026" style="display:none;margin-top:6px" oninput="S.cfg.customer_source=this.value;scheduleAutoSave()"/>')+'</div>'
     +'<div><label class="f-label">Zeithorizont</label><input class="f-input" value="'+esc(cfg.time_horizon||'')+'" oninput="S.cfg.time_horizon=this.value;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Rabatt / Zuschlag (%)</label><input class="f-input" type="number" step="0.5" value="'+(cfg.configuration_discount_percent||0)+'" oninput="S.cfg.configuration_discount_percent=clamp(this.value,-50,50,0);updatePrices();scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Schätzwert (€)</label><input class="f-input" type="number" value="'+(cfg.estimated_value||'')+'" placeholder="für frühe Gespräche" oninput="S.cfg.estimated_value=parseFloat(this.value)||null;scheduleAutoSave()"/></div>'
@@ -2368,6 +2475,7 @@ async function saveConfig(){
     win_probability:cfg.win_probability,followup_date:cfg.followup_date||null,
     closed_at:cfg.closed_at||null,ball_at:cfg.ball_at||'uns',ball_since:cfg.ball_since||null,
     meeting_date:cfg.meeting_date||null,
+    contact_subtype:cfg.contact_subtype||null,discard_reason:cfg.discard_reason||null,
     version_number:newV,updated_at:new Date().toISOString(),
   });
   var res=await db.insert('versions',{configuration_id:cfg.id,version_number:newV,created_at:new Date().toISOString(),change_note:'Gespeichert'});
@@ -2764,7 +2872,7 @@ function makeExcel(){
   var wb=XLSX.utils.book_new();
   var rows=[['Vanfabrik Konfigurator'],[],
     ['Kunde',cfg.customer_name],['Fahrzeug',veh?veh.name:'—'],
-    ['Status',cfg.status||'Entwurf'],['Quelle',cfg.customer_source||'—'],
+    ['Status',cfg.status||'Neu'],['Quelle',cfg.customer_source||'—'],
     ['Zeithorizont',cfg.time_horizon||'—'],['Version','v'+(cfg.version_number||1)],
     ['Wahrscheinlichkeit',(cfg.win_probability!=null?cfg.win_probability:STATUS_PROB[cfg.status]||10)+'%'],[],
     ['Kategorie','Unterkategorie','Leistung','Einheit','Menge','Basispreis','Fahrzeugfaktor','Endpreis','Notiz']];
@@ -3244,6 +3352,8 @@ async function autoSave(){
     closed_at:cfg.closed_at||null,
     ball_at:cfg.ball_at||'uns',ball_since:cfg.ball_since||null,
     meeting_date:cfg.meeting_date||null,
+    contact_subtype:cfg.contact_subtype||null,
+    discard_reason:cfg.discard_reason||null,
     updated_at:new Date().toISOString(),
   });
   _dirty=false;
