@@ -185,6 +185,22 @@ input,select,textarea{font-family:var(--font-ui);font-size:15px}
 
 /* ── HOME ── */
 .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
+.home-blocks{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px}
+@media(max-width:900px){.home-blocks{grid-template-columns:1fr}}
+.home-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:20px 22px;min-height:120px}
+.home-block-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--ink4);margin-bottom:14px}
+.hb-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}
+.hb-item:last-child{border-bottom:none}
+.hb-item:hover{color:var(--pine)}
+.hb-name{font-weight:500}
+.hb-meta{font-size:11px;color:var(--ink3)}
+.hb-tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.hb-tag-red{background:var(--red-bg);color:var(--red)}
+.hb-tag-amber{background:var(--amber-bg);color:var(--amber)}
+.hb-tag-green{background:#e8f5e9;color:#2e7d32}
+.hb-empty{font-size:12px;color:var(--ink4);padding:8px 0}
+.hb-stat{font-size:28px;font-weight:600;letter-spacing:-.04em;color:var(--ink);margin-bottom:2px}
+.hb-stat-sub{font-size:12px;color:var(--ink3)}
 .home-card{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r-xl);padding:22px 24px;
@@ -836,14 +852,7 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
         </div>
         <button class="btn btn-primary" onclick="showNewConfig()">+ Neue Konfiguration</button>
       </div>
-      <div class="home-grid" id="home-stats"><div class="home-card"><div class="home-card-title">Pipeline</div><div class="home-stat">120k €</div><div class="home-stat-sub">4 offene Projekte</div></div><div class="home-card"><div class="home-card-title">Neue Anfragen</div><div class="home-stat">3</div><div class="home-stat-sub">Entwurf &amp; Erstgespräch</div></div><div class="home-card"><div class="home-card-title">Alle Konfigurationen</div><div class="home-stat">4</div><div class="home-stat-sub">aktive Projekte</div></div><div class="home-card"><div class="home-card-title">Heute</div><div class="home-stat">13.04.26</div><div class="home-stat-sub">Montag</div></div></div>
-      <div id="home-alerts"><div class="alert-banner alert-red"><div><div class="alert-title">⚠ 1 überfällige Wiedervorlage</div><div class="alert-sub">Papa</div></div></div></div>
-      <div class="section-lbl" id="home-today-lbl" style="">Wiedervorlagen</div>
-      <div id="home-today"><div class="today-item" onclick="openConfig(6)"><div><div class="today-item-name">Papa</div><div class="today-item-sub">an Kunden gesendet · Mercedes Sprinter L4H2</div></div><span class="today-item-date date-overdue">Überfällig — 12.4.2026</span></div></div>
-      <div style="margin-top:24px" id="home-recent-wrap">
-        <div class="section-lbl">Zuletzt aktiv</div>
-        <div id="home-recent"><div class="config-card" onclick="openConfig(9)"><div><div class="card-name">Alexandra Dammenhain</div><div class="card-sub">&amp;mdash; · Entwurf</div><div style="margin-top:5px"><span class="ball-badge ball-us">● Bei uns</span></div></div><span class="badge" style="background:#a8a89e15;color:#a8a89e">Entwurf</span></div><div class="config-card" onclick="openConfig(8)"><div><div class="card-name">Clara</div><div class="card-sub">Mercedes Sprinter L2H2 · Entwurf</div><div style="margin-top:5px"><span class="ball-badge ball-us">● Bei uns</span></div></div><span class="badge" style="background:#a8a89e15;color:#a8a89e">Entwurf</span></div><div class="config-card" onclick="openConfig(7)"><div><div class="card-name">Hendrik Test</div><div class="card-sub">Mercedes Sprinter L2H2 · Entwurf</div><div style="margin-top:5px"><span class="ball-badge ball-kunde">● Beim Kunden</span></div></div><span class="badge" style="background:#a8a89e15;color:#a8a89e">Entwurf</span></div><div class="config-card" onclick="openConfig(6)"><div><div class="card-name">Papa</div><div class="card-sub">Mercedes Sprinter L4H2 · an Kunden gesendet</div><div style="margin-top:5px"><span class="ball-badge ball-us">● Bei uns</span></div></div><span class="badge" style="background:#1a7a3a15;color:#1a7a3a">an Kunden gesendet</span></div></div>
-      </div>
+      <div class="home-blocks" id="home-blocks"></div>
     </div>
   </div>
 
@@ -1178,7 +1187,7 @@ var todayStr=function(){return new Date().toISOString().slice(0,10)};
 var SCOL={'Neu':'#a8a89e','In Kontakt':'#1d4ed8','Qualifizierung':'#6a4ec0','Konzept & Folgetermin':'#8a6000','Angebot versendet':'#1a7a3a','Abgeschlossen':'#111110','Verworfen':'#c0392b'};
 var PIPELINE_STATUSES=['Neu','In Kontakt','Qualifizierung','Konzept & Folgetermin','Angebot versendet'];
 var ALL_STATUSES=['Neu','In Kontakt','Qualifizierung','Konzept & Folgetermin','Angebot versendet','Abgeschlossen','Verworfen'];
-var STATUS_PROB={'Neu':5,'In Kontakt':15,'Qualifizierung':35,'Konzept & Folgetermin':55,'Angebot versendet':75,'Abgeschlossen':100,'Verworfen':0};
+var STATUS_PROB={'Neu':5,'In Kontakt':15,'Qualifizierung':25,'Konzept & Folgetermin':40,'Angebot versendet':60,'Abgeschlossen':100,'Verworfen':0};
 var CONTACT_SUBTYPES=['Mail gesendet','Termin vereinbart'];
 var DISCARD_REASONS=['Budget nicht passend','Kein Interesse','Keine Reaktion','Anderer Anbieter','Sonstiges'];
 var SOURCES=['Google','Instagram','YouTube','Messe','Empfehlung','Stammkunde','Sonstiges'];
@@ -1419,86 +1428,76 @@ function nav(view){
 async function renderHome(){
   var data=await db.get('configurations');
   S.configs=data.data||[];
-  var allItems=DEMO?DB.config_items:[];
-  var allAttrs=DEMO?DB.config_attrs:[];
 
   var today=todayStr();
+  var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);var tomorrowStr=tomorrow.toISOString().slice(0,10);
   var dateStr=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
   $('home-date').textContent=dateStr;
 
-  var active=S.configs.filter(function(c){return c.status!=='verworfen'});
-  var pipeline=S.configs.filter(function(c){return c.status!=='abgeschlossen'&&c.status!=='verworfen'});
-  var pipeVal=pipeline.reduce(function(s,c){
-    var items=allItems.filter(function(i){return i.configuration_id===c.id});
-    var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
-    return s+configTotal(c,items,attrs);
-  },0);
-  var open=S.configs.filter(function(c){return c.status==='Neu'||c.status==='In Kontakt'});
+  var active=S.configs.filter(function(c){return c.status!=='Verworfen'&&c.status!=='Abgeschlossen'});
 
-  $('home-stats').innerHTML=
-    '<div class="home-card"><div class="home-card-title">Pipeline</div><div class="home-stat">'+fmtK(pipeVal)+' \u20ac</div><div class="home-stat-sub">'+pipeline.length+' offene Projekte</div></div>'
-    +'<div class="home-card"><div class="home-card-title">Neue Anfragen</div><div class="home-stat">'+open.length+'</div><div class="home-stat-sub">Neu & In Kontakt</div></div>'
-    +'<div class="home-card"><div class="home-card-title">Alle Konfigurationen</div><div class="home-stat">'+active.length+'</div><div class="home-stat-sub">aktive Projekte</div></div>'
-    +'<div class="home-card"><div class="home-card-title">Heute</div><div class="home-stat">'+new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})+'</div><div class="home-stat-sub">'+new Date().toLocaleDateString('de-DE',{weekday:'long'})+'</div></div>';
-
-  // Alerts
-  var overdue=S.configs.filter(function(c){return c.followup_date&&c.followup_date<today&&c.status!=='abgeschlossen'&&c.status!=='verworfen'&&!(c.meeting_date&&c.meeting_date>=today)});
-  var dueToday=S.configs.filter(function(c){return c.followup_date&&c.followup_date===today&&c.status!=='abgeschlossen'&&c.status!=='verworfen'&&!(c.meeting_date&&c.meeting_date>=today)});
-  var alerts='';
-  if(overdue.length){
-    alerts+='<div class="alert-banner alert-red"><div>'
-      +'<div class="alert-title">\u26a0 '+overdue.length+' überfällige Wiedervorlage'+(overdue.length!==1?'n':'')+'</div>'
-      +'<div class="alert-sub">'+overdue.map(function(c){return esc(c.customer_name)}).join(', ')+'</div>'
-      +'</div></div>';
-  }
-  if(dueToday.length){
-    alerts+='<div class="alert-banner alert-amber"><div>'
-      +'<div class="alert-title">\u21a9 '+dueToday.length+' Wiedervorlage'+(dueToday.length!==1?'n':'')+' heute</div>'
-      +'<div class="alert-sub">'+dueToday.map(function(c){return esc(c.customer_name)}).join(', ')+'</div>'
-      +'</div></div>';
-  }
-  $('home-alerts').innerHTML=alerts;
-
-  // Followups
-  var due=overdue.concat(dueToday).sort(function(a,b){return a.followup_date.localeCompare(b.followup_date)});
-  if(due.length){
-    $('home-today-lbl').style.display='';
-    $('home-today').innerHTML=due.map(function(c){
+  // ── BLOCK 1: Wiedervorlage ──
+  var followups=active.filter(function(c){return c.followup_date&&c.followup_date<=tomorrowStr})
+    .sort(function(a,b){return a.followup_date.localeCompare(b.followup_date)});
+  var b1='<div class="home-block"><div class="home-block-title">Wiedervorlage</div>';
+  if(followups.length){
+    b1+=followups.map(function(c){
       var isOD=c.followup_date<today;
-      var label=isOD?'Überfällig &mdash; '+new Date(c.followup_date).toLocaleDateString('de-DE'):'Heute';
-      return '<div class="today-item" onclick="openConfig('+c.id+')">'
-        +'<div><div class="today-item-name">'+esc(c.customer_name)+'</div>'
-        +'<div class="today-item-sub">'+esc(c.status)+' &middot; '+esc(c.vehicle_name||'\u2014')+'</div></div>'
-        +'<span class="today-item-date '+(isOD?'date-overdue':'date-today')+'">'+label+'</span>'
-        +'</div>';
+      var isToday=c.followup_date===today;
+      var days=Math.floor((new Date(today)-new Date(c.followup_date))/86400000);
+      var tagClass=isOD?'hb-tag-red':'hb-tag-amber';
+      var tagText=isOD?(days===1?'1 Tag':days+' Tage')+' \u00fcberf\u00e4llig':isToday?'Heute':'Morgen';
+      var sub=esc(c.status);
+      if(c.contact_subtype&&c.status==='In Kontakt')sub+=' \u00b7 '+esc(c.contact_subtype);
+      return '<div class="hb-item" onclick="openConfig('+c.id+')">'
+        +'<div><div class="hb-name">'+esc(c.customer_name)+'</div><div class="hb-meta">'+sub+'</div></div>'
+        +'<span class="hb-tag '+tagClass+'">'+tagText+'</span></div>';
     }).join('');
   } else {
-    $('home-today-lbl').style.display='none';
-    $('home-today').innerHTML='';
+    b1+='<div class="hb-empty">Keine offenen Wiedervorlagen \u2713</div>';
   }
+  b1+='</div>';
 
-  // Recent configs
-  var recent=S.configs.filter(function(c){return c.status!=='verworfen'})
-    .sort(function(a,b){return new Date(b.updated_at||b.created_at||0)-new Date(a.updated_at||a.created_at||0)})
-    .slice(0,5);
-  if(recent.length){
-    $('home-recent').innerHTML=recent.map(function(c){
-      return '<div class="config-card" onclick="openConfig('+c.id+')">'
-        +'<div><div class="card-name">'+esc(c.customer_name)+'</div>'
-        +'<div class="card-sub">'+esc(c.vehicle_name||'\u2014')+' &middot; '+esc(c.status)+'</div>'
-      +'<div style="margin-top:5px"><span class="ball-badge '+((!c.ball_at||c.ball_at==='uns')?'ball-us':'ball-kunde')+'">'+
-      ((!c.ball_at||c.ball_at==='uns')?'&#9679; Bei uns':'&#9679; Beim Kunden')+'</span></div>'
-      +'</div>'
-        +'<span class="badge" style="background:'+SCOL[c.status]+'15;color:'+SCOL[c.status]+'">'+esc(c.status)+'</span>'
-        +'</div>';
+  // ── BLOCK 2: Pipeline gewichtet ──
+  var weightedSum=active.reduce(function(s,c){
+    var ev=parseFloat(c.estimated_value)||0;
+    var prob=c.win_probability!=null?c.win_probability:(STATUS_PROB[c.status]||10);
+    return s+ev*prob/100;
+  },0);
+  var totalEstimated=active.reduce(function(s,c){return s+(parseFloat(c.estimated_value)||0)},0);
+  var b2='<div class="home-block"><div class="home-block-title">Pipeline gewichtet</div>'
+    +'<div class="hb-stat">'+fmtK(weightedSum)+' \u20ac</div>'
+    +'<div class="hb-stat-sub">aus '+active.length+' aktiven Leads</div>'
+    +'<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)"><span>Ungewichtet</span><span style="font-weight:600;color:var(--ink)">'+fmtK(totalEstimated)+' \u20ac</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-top:4px"><span>\u00d8 Wahrscheinlichkeit</span><span style="font-weight:600;color:var(--ink)">'+(totalEstimated?Math.round(weightedSum/totalEstimated*100):0)+'%</span></div>'
+    +'</div></div>';
+
+  // ── BLOCK 3: Ball-Verteilung ──
+  var ballUns=active.filter(function(c){return !c.ball_at||c.ball_at==='uns'})
+    .sort(function(a,b){return(a.ball_since||'9').localeCompare(b.ball_since||'9')});
+  var ballKunde=active.filter(function(c){return c.ball_at==='kunde'})
+    .sort(function(a,b){return(a.ball_since||'9').localeCompare(b.ball_since||'9')});
+  function ballList(items,label){
+    if(!items.length)return '<div class="hb-empty">Keine</div>';
+    return items.map(function(c){
+      var days=c.ball_since?Math.floor((new Date(today)-new Date(c.ball_since))/86400000):0;
+      var dayStr=days===0?'heute':days===1?'1 Tag':days+' Tage';
+      return '<div class="hb-item" onclick="openConfig('+c.id+')">'
+        +'<div class="hb-name">'+esc(c.customer_name)+'</div>'
+        +'<span class="hb-meta">seit '+dayStr+'</span></div>';
     }).join('');
-    $('home-recent-wrap').style.display='';
-  } else {
-    $('home-recent-wrap').style.display='none';
   }
+  var b3='<div class="home-block"><div class="home-block-title">Ball liegt bei</div>'
+    +'<div style="font-size:11px;font-weight:600;color:var(--pine);margin-bottom:4px">Bei uns ('+ballUns.length+')</div>'
+    +ballList(ballUns)
+    +'<div style="font-size:11px;font-weight:600;color:var(--ink3);margin-top:10px;margin-bottom:4px">Beim Kunden ('+ballKunde.length+')</div>'
+    +ballList(ballKunde)
+    +'</div>';
+
+  $('home-blocks').innerHTML=b1+b2+b3;
 
   checkBallReset(S.configs);
-  // Auto snapshot
   maybeSnapshot().catch(function(e){console.log('Snapshot skipped:',e)});
 }
 
@@ -1647,8 +1646,11 @@ async function onKcolDrop(e){
   var cfg=S.configs.find(function(c){return c.id===cfgId});
   if(!cfg||cfg.status===newStatus)return;
   var oldStatus=cfg.status;
+  var oldDefault=STATUS_PROB[oldStatus]||10;
+  var currentProb=cfg.win_probability!=null?cfg.win_probability:oldDefault;
   cfg.status=newStatus;
-  cfg.win_probability=STATUS_PROB[newStatus]||cfg.win_probability;
+  // Only auto-update if probability is still on the old status default
+  if(currentProb===oldDefault)cfg.win_probability=STATUS_PROB[newStatus]||cfg.win_probability;
   await db.update('configurations',cfgId,{status:newStatus,win_probability:cfg.win_probability,updated_at:new Date().toISOString()});
   db.insert('activities',{configuration_id:cfgId,type:'Notiz',note:'Status: '+oldStatus+' \u2192 '+newStatus,created_at:new Date().toISOString()});
   toast(cfg.customer_name+': '+oldStatus+' \u2192 '+newStatus);
@@ -1950,7 +1952,8 @@ function onStatusChange(newStatus){
   var oldDefault=STATUS_PROB[oldStatus]||10;
   var currentProb=S.cfg.win_probability!=null?S.cfg.win_probability:oldDefault;
   var newDefault=STATUS_PROB[newStatus]||10;
-  if(Object.values(STATUS_PROB).indexOf(currentProb)>=0){
+  // Only auto-update if probability is still on the old status default (not manually overridden)
+  if(currentProb===oldDefault){
     S.cfg.win_probability=newDefault;$('prob-slider').value=newDefault;$('prob-val').textContent=newDefault+'%';
   }
   if(oldStatus&&oldStatus!==newStatus){
