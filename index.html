@@ -726,7 +726,7 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
   border:1px solid var(--border);background:#111;
   cursor:move;touch-action:none;
 }
-#crop-canvas{display:block;width:100%}
+#crop-canvas{display:block}
 .crop-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
 
 /* ── LOGIN ── */
@@ -3449,11 +3449,12 @@ function openCrop(){
   var ov=document.getElementById('crop-overlay');
   var wrap=document.getElementById('crop-wrap-inner');
 
-  cv.width=dispW;cv.height=dispH;
-  cv.style.width=dispW+'px';cv.style.height=dispH+'px';
-  ov.width=dispW;ov.height=dispH;
-  ov.style.width=dispW+'px';ov.style.height=dispH+'px';
-  wrap.style.width=dispW+'px';wrap.style.height=CROP_H+'px';
+  // Canvas = crop viewport (fixed size), image is drawn with offsets inside
+  cv.width=DISPLAY_W;cv.height=CROP_H;
+  cv.style.width=DISPLAY_W+'px';cv.style.height=CROP_H+'px';
+  ov.width=DISPLAY_W;ov.height=CROP_H;
+  ov.style.width=DISPLAY_W+'px';ov.style.height=CROP_H+'px';
+  wrap.style.width=DISPLAY_W+'px';wrap.style.height=CROP_H+'px';
 
   _cropOffX=Math.round((DISPLAY_W-dispW)/2);
   _cropOffY=Math.round((CROP_H-dispH)/2);
