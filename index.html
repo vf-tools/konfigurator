@@ -575,6 +575,22 @@ input[type=range]::-webkit-slider-thumb{
   display:block;font-size:11px;font-weight:600;color:var(--ink4);
   margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em;
 }
+.tip-i{
+  position:relative;cursor:help;font-size:13px;color:var(--ink3);
+  font-style:normal;text-transform:none;letter-spacing:0;margin-left:4px;
+}
+.tip-pop{
+  display:none;position:absolute;bottom:calc(100% + 6px);left:50%;
+  transform:translateX(-50%);width:260px;padding:10px 12px;
+  background:var(--pine);color:#fff;font-size:12px;font-weight:400;
+  line-height:1.5;border-radius:8px;z-index:90;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:none;
+}
+.tip-pop::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--pine);
+}
+.tip-i:hover .tip-pop,.tip-i:focus .tip-pop{display:block}
 .f-input{
   width:100%;padding:10px 13px;
   border:1px solid var(--border);border-radius:var(--r-md);
@@ -1233,14 +1249,13 @@ async function loadMaster(){
   S.services=results[2].data.filter(function(s){return s.active});
   S.vehicles=results[3].data.filter(function(v){return v.active});
   S.priceFactor=parseFloat(results[4])||1.0;
-  var calcSettings=await Promise.all([db.getSetting('hourly_rate'),db.getSetting('material_markup'),db.getSetting('profit_margin'),db.getSetting('mat_gkz_pct'),db.getSetting('fert_gkz_pct'),db.getSetting('wug_pct'),db.getSetting('fixkosten_monat')]);
+  var calcSettings=await Promise.all([db.getSetting('hourly_rate'),db.getSetting('material_markup'),db.getSetting('profit_margin'),db.getSetting('mat_gkz_pct'),db.getSetting('fert_gkz_pct'),db.getSetting('wug_pct')]);
   S.hourlyRate=parseFloat(calcSettings[0])||85.0;
   S.materialMarkup=parseFloat(calcSettings[1])||0;
   S.profitMargin=parseFloat(calcSettings[2])||0;
   S.matGkzPct=parseFloat(calcSettings[3])||0;
   S.fertGkzPct=parseFloat(calcSettings[4])||0;
   S.wugPct=parseFloat(calcSettings[5])||0;
-  S.fixkostenMonat=parseFloat(calcSettings[6])||0;
   S.attrGroups=results[5].data.filter(function(g){return g.active}).sort(function(a,b){return a.sort_order-b.sort_order});
   S.attrOptions=results[6].data.filter(function(o){return o.active}).sort(function(a,b){return a.sort_order-b.sort_order});
 }
@@ -3385,36 +3400,75 @@ async function renderABody(){
     var mgkz=await db.getSetting('mat_gkz_pct');
     var fgkz=await db.getSetting('fert_gkz_pct');
     var wugS=await db.getSetting('wug_pct');
-    var fkm=await db.getSetting('fixkosten_monat');
+    var tip=function(t){return ' <span class="tip-i" tabindex="0">&#9432;<span class="tip-pop">'+t+'</span></span>'};
     el.innerHTML='<div style="font-size:15px;font-weight:700;margin-bottom:16px">Preiskalkulation</div>'
-      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Alle Preise werden berechnet aus: <strong>Materialkosten netto</strong> \u00d7 (1 + Materialzuschlag) + <strong>Stunden</strong> \u00d7 Stundensatz netto, dann \u00d7 (1 + W&G) \u00d7 1,19 MwSt.</p>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">'
-      +'<div><label class="f-label">Stundensatz (netto)</label>'
+      +'<div><label class="f-label">Stundensatz (netto)'+tip('Vollkostenbasierter Stundensatz \u2013 enth\u00e4lt Lohnkosten, Lohnnebenkosten, anteilige Fixkosten und Gemeinkosten. Basis f\u00fcr alle Lohnberechnungen.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="hr-in" class="f-input" style="width:120px" value="'+(hr||'85')+'"/><span style="font-size:12px;color:var(--ink3)">\u20ac/h</span></div></div>'
-      +'<div><label class="f-label">Materialzuschlag</label>'
+      +'<div><label class="f-label">Materialzuschlag'+tip('Prozentualer Aufschlag auf den Materialeinkaufspreis. Deckt Handling, Lagerung und Materialverwaltung ab.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="mm-in" class="f-input" style="width:120px" value="'+(mm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
-      +'<div><label class="f-label">Wagnis & Gewinn</label>'
+      +'<div><label class="f-label">Wagnis & Gewinn'+tip('Aufschlag auf die Selbstkosten f\u00fcr unternehmerisches Risiko und Gewinnmarge.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="1" id="pm-in" class="f-input" style="width:120px" value="'+(pm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
-      +'<div><label class="f-label">Globaler Preisfaktor</label>'
+      +'<div><label class="f-label">Globaler Preisfaktor'+tip('Multiplikator auf alle Angebotspreise. 1.0 = kein Aufschlag. F\u00fcr globale Preisanpassungen.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.01" id="pf-in" class="f-input" style="width:120px" value="'+(pf||'1.00')+'"/><span style="font-size:12px;color:var(--ink3)">\u00d7</span></div></div>'
       +'</div>'
       +'<div style="height:1px;background:var(--border);margin:24px 0"></div>'
       +'<div style="font-size:15px;font-weight:700;margin-bottom:6px">BWL-Kalkulation</div>'
-      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Gemeinkosten-Zuschläge für die interne Kalkulation (Deckungsbeitrag, Betriebsergebnis, etc.). Können pro Projekt überschrieben werden.</p>'
+      +'<p style="font-size:13px;color:var(--ink2);margin-bottom:18px;line-height:1.6">Gemeinkosten-Zuschl\u00e4ge f\u00fcr die interne Kalkulation. K\u00f6nnen pro Projekt \u00fcberschrieben werden.</p>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">'
-      +'<div><label class="f-label">Material-GKZ</label>'
+      +'<div><label class="f-label">Material-GKZ'+tip('Materialgemeinkosten-Zuschlag. Prozentualer Aufschlag auf Materialeinkaufskosten f\u00fcr die interne Deckungsbeitragsrechnung. Unabh\u00e4ngig vom Materialzuschlag in der Preiskalkulation.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.5" id="mgkz-in" class="f-input" style="width:120px" value="'+(mgkz||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
-      +'<div><label class="f-label">Fertigungs-GKZ</label>'
+      +'<div><label class="f-label">Fertigungs-GKZ'+tip('Fertigungsgemeinkosten-Zuschlag. Prozentualer Aufschlag auf Lohnkosten f\u00fcr indirekte Fertigungskosten wie Maschinenwartung, Werkzeugverschlei\u00df etc.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.5" id="fgkz-in" class="f-input" style="width:120px" value="'+(fgkz||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
-      +'<div><label class="f-label">Wagnis & Gewinn (BWL)</label>'
+      +'<div><label class="f-label">Wagnis & Gewinn (BWL)'+tip('BWL-seitiger W&amp;G-Aufschlag f\u00fcr die interne Kalkulation. Kann vom Angebots-W&amp;G abweichen.')+'</label>'
       +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="0.5" id="wug-in" class="f-input" style="width:120px" value="'+(wugS||'0')+'"/><span style="font-size:12px;color:var(--ink3)">%</span></div></div>'
-      +'<div><label class="f-label">Fixkosten / Monat</label>'
-      +'<div style="display:flex;gap:8px;align-items:center"><input type="number" step="100" id="fkm-in" class="f-input" style="width:120px" value="'+(fkm||'0')+'"/><span style="font-size:12px;color:var(--ink3)">\u20ac</span></div></div>'
       +'</div>'
       +'<button class="btn btn-primary" onclick="saveCalcSettings()" style="margin-top:16px">Alle speichern</button>'
       +'<div id="calc-preview" style="margin-top:20px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--ink2);max-width:500px">'
       +'<div style="font-weight:600;margin-bottom:6px">Beispielrechnung (Service 1)</div>'
-      +'<div id="calc-example"></div></div>';
+      +'<div id="calc-example"></div></div>'
+      +'<div style="margin-top:24px">'
+      +'<div onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.cat-chevron\').classList.toggle(\'open\')" style="padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px 8px 0 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:13px;font-weight:600;color:var(--ink2)">Berechnungsformel Angebotspreis</span><span class="cat-chevron">\u203a</span></div>'
+      +'<div class="cat-body"><div style="padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;font-size:12px;line-height:1.8;color:var(--ink2)">'
+      +'<div style="font-weight:600;margin-bottom:4px">Schritt 1: Materialkosten</div>'
+      +'Materialeinkauf \u00d7 (1 + Materialzuschlag %) = Materialkosten kalk.<br>'
+      +'<div style="font-weight:600;margin:8px 0 4px">Schritt 2: Lohnkosten</div>'
+      +'Stunden \u00d7 Stundensatz (netto) = Lohnkosten<br>'
+      +'<div style="font-weight:600;margin:8px 0 4px">Schritt 3: Netto-Summe</div>'
+      +'Materialkosten kalk. + Lohnkosten = Netto-Summe<br>'
+      +'<div style="font-weight:600;margin:8px 0 4px">Schritt 4: Wagnis & Gewinn</div>'
+      +'Netto-Summe \u00d7 (1 + W&G %) = Kalkulierter Nettopreis<br>'
+      +'<div style="font-weight:600;margin:8px 0 4px">Schritt 5: Bruttopreis</div>'
+      +'Kalkulierter Nettopreis \u00d7 1,19 = <strong>Angebotspreis brutto</strong><br>'
+      +'<div id="calc-formula-example" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)"></div>'
+      +'</div></div>'
+      +'</div>'
+      +'<div style="margin-top:8px">'
+      +'<div onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.cat-chevron\').classList.toggle(\'open\')" style="padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px 8px 0 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:13px;font-weight:600;color:var(--ink2)">Berechnungsformel Deckungsbeitrag & Betriebsergebnis</span><span class="cat-chevron">\u203a</span></div>'
+      +'<div class="cat-body"><div style="padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;font-size:12px;line-height:1.8;color:var(--ink2)">'
+      +'<div style="font-weight:600;margin-bottom:4px">Deckungsbeitrag (DB)</div>'
+      +'Angebotspreis (netto)<br>'
+      +'\u2212 Materialeinkauf<br>'
+      +'\u2212 Lohnkosten (Stunden \u00d7 Stundensatz)<br>'
+      +'= <strong>DB absolut</strong><br>'
+      +'DB % = DB absolut / Angebotspreis (netto)<br>'
+      +'<div style="font-weight:600;margin:12px 0 4px">Betriebsergebnis (BE)</div>'
+      +'Angebotspreis (netto)<br>'
+      +'\u2212 Materialkosten kalk. (inkl. Material-GKZ)<br>'
+      +'\u2212 Lohnkosten kalk. (inkl. Fertigungs-GKZ)<br>'
+      +'= <strong>BE absolut</strong><br>'
+      +'BE % = BE absolut / Angebotspreis (netto)<br>'
+      +'<div style="font-weight:600;margin:12px 0 4px">Kalkulations-Gewinn</div>'
+      +'Angebotspreis (netto)<br>'
+      +'\u2212 Kalkulierter Angebotspreis (inkl. W&G BWL)<br>'
+      +'= <strong>Gewinn absolut</strong><br>'
+      +'Gewinn % = Gewinn absolut / Angebotspreis (netto)<br>'
+      +'<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-style:italic;color:var(--ink3)">'
+      +'Der Deckungsbeitrag zeigt ob ein Auftrag die direkten Kosten deckt. Das Betriebsergebnis zeigt ob nach allen Gemeinkosten noch etwas \u00fcbrig bleibt. Der Kalkulations-Gewinn zeigt die Abweichung vom kalkulierten Zielgewinn.</div>'
+      +'</div></div>'
+      +'</div>';
     updateCalcExample();
     return;
   }
@@ -3527,17 +3581,17 @@ async function saveCalcSettings(){
   var hr=clamp($('hr-in').value,10,500,85);var mm=clamp($('mm-in').value,0,100,0);
   var pm=clamp($('pm-in').value,0,50,0);var pf=clamp($('pf-in').value,0.5,2.0,1.0);
   var mgkz=clamp($('mgkz-in').value,0,200,0);var fgkz=clamp($('fgkz-in').value,0,200,0);
-  var wugB=clamp($('wug-in').value,0,100,0);var fkm=clamp($('fkm-in').value,0,999999,0);
+  var wugB=clamp($('wug-in').value,0,100,0);
   $('hr-in').value=hr;$('mm-in').value=mm;$('pm-in').value=pm;$('pf-in').value=pf;
-  $('mgkz-in').value=mgkz;$('fgkz-in').value=fgkz;$('wug-in').value=wugB;$('fkm-in').value=fkm;
+  $('mgkz-in').value=mgkz;$('fgkz-in').value=fgkz;$('wug-in').value=wugB;
   await Promise.all([
     db.setSetting('hourly_rate',String(hr)),db.setSetting('material_markup',String(mm)),
     db.setSetting('profit_margin',String(pm)),db.setSetting('price_adjustment_factor',String(pf)),
     db.setSetting('mat_gkz_pct',String(mgkz)),db.setSetting('fert_gkz_pct',String(fgkz)),
-    db.setSetting('wug_pct',String(wugB)),db.setSetting('fixkosten_monat',String(fkm))
+    db.setSetting('wug_pct',String(wugB))
   ]);
   S.hourlyRate=hr;S.materialMarkup=mm;S.profitMargin=pm;S.priceFactor=pf;
-  S.matGkzPct=mgkz;S.fertGkzPct=fgkz;S.wugPct=wugB;S.fixkostenMonat=fkm;
+  S.matGkzPct=mgkz;S.fertGkzPct=fgkz;S.wugPct=wugB;
   toast('Kalkulation gespeichert');updateCalcExample();
 }
 function updateCalcExample(){
@@ -3552,11 +3606,14 @@ function updateCalcExample(){
   var nettoSumme=matNetto+lohnNetto;
   var mitWG=nettoSumme*(1+pm/100);
   var angebot=mitWG*1.19;
-  el.innerHTML='<strong>'+esc(svc.name.split(':')[0])+'</strong> (ID '+svc.id+')<br>'
+  var exHtml='<strong>'+esc(svc.name.split(':')[0])+'</strong> (ID '+svc.id+')<br>'
     +'Materialkosten netto: '+fmt(svc.material_cost)+' \u00d7 '+(1+mm/100).toFixed(2)+' = '+fmt(matNetto)+'<br>'
     +'Lohn netto: '+svc.labor_hours+'h \u00d7 '+fmt(hr)+' = '+fmt(lohnNetto)+'<br>'
     +'Netto-Summe: '+fmt(nettoSumme)+(pm>0?' \u00d7 '+(1+pm/100).toFixed(2)+' (W&G) = '+fmt(mitWG):'')+'<br>'
     +'<strong>Angebotspreis (brutto): '+fmt(angebot)+'</strong>';
+  el.innerHTML=exHtml;
+  var fEl=$('calc-formula-example');
+  if(fEl)fEl.innerHTML='<div style="font-weight:600;margin-bottom:4px">Beispiel: '+esc(svc.name.split(':')[0])+'</div>'+exHtml;
 }
 async function toggleA(t,id,cur){await db.update(t,id,{active:!cur});await loadMaster();renderABody()}
 
