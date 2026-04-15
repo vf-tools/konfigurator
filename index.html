@@ -3434,8 +3434,16 @@ function openCrop(){
   var DISPLAY_W=Math.min(460,window.innerWidth-80);
   var CROP_H=Math.round(DISPLAY_W/2);
   var imgAspect=_cropImg.width/_cropImg.height;
-  var dispW=DISPLAY_W,dispH=Math.round(DISPLAY_W/imgAspect);
-  if(dispH<CROP_H){dispH=CROP_H;dispW=Math.round(CROP_H*imgAspect)}
+  var cropAspect=DISPLAY_W/CROP_H; // 2:1
+  // Scale image to COVER the crop area (always fills, always draggable)
+  var dispW,dispH;
+  if(imgAspect>cropAspect){
+    // Image is wider than crop → match height, overflow width
+    dispH=CROP_H;dispW=Math.round(CROP_H*imgAspect);
+  } else {
+    // Image is taller than crop → match width, overflow height
+    dispW=DISPLAY_W;dispH=Math.round(DISPLAY_W/imgAspect);
+  }
 
   var cv=document.getElementById('crop-canvas');
   var ov=document.getElementById('crop-overlay');
@@ -3447,8 +3455,8 @@ function openCrop(){
   ov.style.width=dispW+'px';ov.style.height=dispH+'px';
   wrap.style.width=dispW+'px';wrap.style.height=CROP_H+'px';
 
-  _cropOffX=0;
-  _cropOffY=Math.round((dispH-CROP_H)/2);
+  _cropOffX=Math.round((DISPLAY_W-dispW)/2);
+  _cropOffY=Math.round((CROP_H-dispH)/2);
   cv._dispW=dispW;cv._dispH=dispH;cv._cropH=CROP_H;cv._cropW=DISPLAY_W;
   cv._baseW=dispW;cv._baseH=dispH;cv._zoom=100;
   var zoomSlider=document.getElementById('crop-zoom');
@@ -3463,8 +3471,8 @@ function openCrop(){
   function onCropMove(e){
     if(!_cropDrag)return;e.preventDefault();
     var p=getPos(e);
-    _cropOffX=Math.max(Math.min(_cropOffX+(p.x-_cropStartX),0),DISPLAY_W-cv._dispW);
-    _cropOffY=Math.max(Math.min(_cropOffY+(p.y-_cropStartY),0),CROP_H-cv._dispH);
+    _cropOffX=Math.max(Math.min(_cropOffX+(p.x-_cropStartX),0),cv._cropW-cv._dispW);
+    _cropOffY=Math.max(Math.min(_cropOffY+(p.y-_cropStartY),0),cv._cropH-cv._dispH);
     _cropStartX=p.x;_cropStartY=p.y;
     drawCrop();
   }
