@@ -3438,11 +3438,16 @@ function openCrop(){
   // Scale image to COVER the crop area (always fills, always draggable)
   var dispW,dispH;
   if(imgAspect>cropAspect){
-    // Image is wider than crop → match height, overflow width
     dispH=CROP_H;dispW=Math.round(CROP_H*imgAspect);
   } else {
-    // Image is taller than crop → match width, overflow height
     dispW=DISPLAY_W;dispH=Math.round(DISPLAY_W/imgAspect);
+  }
+  // If image matches crop aspect exactly (e.g. re-cropping a 2:1 image),
+  // start slightly zoomed so there's room to pan
+  if(dispW<=DISPLAY_W && dispH<=CROP_H){
+    var initZoom=1.15;
+    dispW=Math.round(DISPLAY_W*initZoom);
+    dispH=Math.round(CROP_H*initZoom);
   }
 
   var cv=document.getElementById('crop-canvas');
