@@ -1483,7 +1483,7 @@ async function maybeSnapshot(){
     if(r2.data)allAttrs=r2.data;
   }
 
-  var configs=S.configs.filter(function(c){return c.status!=='verworfen'&&c.status!=='abgeschlossen'});
+  var configs=S.configs.filter(function(c){return c.status!=='Verworfen'&&c.status!=='Abgeschlossen'});
   var pipelineVal=configs.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
     var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
@@ -1697,7 +1697,7 @@ async function renderPipeline(){
   var allAttrs=DEMO?DB.config_attrs:[];
   var today=todayStr();
 
-  var pipeline=S.configs.filter(function(c){return c.status!=='verworfen'&&c.status!=='abgeschlossen'});
+  var pipeline=S.configs.filter(function(c){return c.status!=='Verworfen'&&c.status!=='Abgeschlossen'});
   var won=S.configs.filter(function(c){return c.status==='Abgeschlossen'});
   var pipeVal=pipeline.reduce(function(s,c){
     var items=allItems.filter(function(i){return i.configuration_id===c.id});
@@ -1716,7 +1716,7 @@ async function renderPipeline(){
     '<div class="ps-card"><div class="ps-label">Offene Pipeline</div><div class="ps-val">'+fmtK(pipeVal)+' \u20ac</div><div class="ps-sub">netto \u00b7 '+pipeline.length+' Konfigurationen</div></div>'
     +'<div class="ps-card"><div class="ps-label">Gewichtet</div><div class="ps-val">'+fmtK(weightedVal)+' \u20ac</div><div class="ps-sub">netto \u00b7 inkl. Wahrscheinlichkeit</div></div>'
     +'<div class="ps-card"><div class="ps-label">Abgeschlossen</div><div class="ps-val">'+won.length+'</div><div class="ps-sub">Projekte gewonnen</div></div>'
-    +'<div class="ps-card"><div class="ps-label">Gesamt aktiv</div><div class="ps-val">'+S.configs.filter(function(c){return c.status!=='verworfen'}).length+'</div><div class="ps-sub">Konfigurationen</div></div>';
+    +'<div class="ps-card"><div class="ps-label">Gesamt aktiv</div><div class="ps-val">'+S.configs.filter(function(c){return c.status!=='Verworfen'}).length+'</div><div class="ps-sub">Konfigurationen</div></div>';
 
   $('kanban').innerHTML=PIPELINE_STATUSES.map(function(status){
     var cards=S.configs.filter(function(c){return c.status===status});
@@ -1881,7 +1881,7 @@ async function renderReview(){
       var wonDate=new Date(c.closed_at||c.updated_at||c.created_at||Date.now());
       var bkt=buckets.find(function(b){return b.year===wonDate.getFullYear()&&b.month===wonDate.getMonth()});
       if(bkt)bkt.won.push({c:c,val:val});
-    } else if(c.status!=='verworfen'){
+    } else if(c.status!=='Verworfen'){
       // Use created_at for pipeline
       var d=new Date(c.created_at||Date.now());
       var bkt=buckets.find(function(b){return b.year===d.getFullYear()&&b.month===d.getMonth()});
