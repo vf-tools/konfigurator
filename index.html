@@ -591,6 +591,15 @@ input[type=range]::-webkit-slider-thumb{
   border:5px solid transparent;border-top-color:var(--pine);
 }
 .tip-i:hover .tip-pop,.tip-i:focus .tip-pop{display:block}
+.fup-help{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:50%;background:var(--ink3);
+  color:#fff;font-size:10px;font-weight:700;cursor:pointer;
+  vertical-align:middle;margin-left:3px;line-height:1;
+}
+.fup-help:hover{background:var(--pine)}
+.hb-item.escalated{border:2px solid var(--red);border-radius:8px;background:var(--red-bg)}
+.config-card.escalated{border:2px solid var(--red);background:var(--red-bg)}
 .f-input{
   width:100%;padding:10px 13px;
   border:1px solid var(--border);border-radius:var(--r-md);
@@ -964,8 +973,9 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
           <input type="range" min="0" max="100" step="5" class="prob-slider" id="prob-slider" oninput="S.cfg.win_probability=parseInt(this.value);document.getElementById(&#39;prob-val&#39;).textContent=this.value+&#39;%&#39;;scheduleAutoSave()">
           <span class="prob-val" id="prob-val">50%</span>
         </div>
-        <div class="sb-lbl" style="margin-top:9px">Termin vereinbart</div>
-        <input type="date" class="sb-sel" id="followup-date" style="margin-bottom:9px" oninput="S.cfg.followup_date=this.value;if(this.value&amp;&amp;this.value&gt;=todayStr()&amp;&amp;S.cfg.ball_at!==&#39;kunde&#39;){setBall(&#39;kunde&#39;);}scheduleAutoSave()">
+        <div class="sb-lbl" style="margin-top:9px">Wiedervorlage <span class="fup-help" onclick="event.stopPropagation();showFollowupHelp()" title="Info">?</span></div>
+        <input type="date" class="sb-sel" id="followup-date" style="margin-bottom:4px" oninput="S.cfg.followup_date=this.value;if(this.value&amp;&amp;this.value&gt;=todayStr()&amp;&amp;S.cfg.ball_at!==&#39;kunde&#39;){setBall(&#39;kunde&#39;);}scheduleAutoSave()">
+        <div id="followup-warn" style="display:none;font-size:11px;color:var(--red);margin-bottom:6px"></div>
 
         <div class="sb-lbl" style="margin-top:9px">Ball liegt bei</div>
         <div style="display:flex;gap:6px;margin-bottom:4px">
@@ -1519,7 +1529,7 @@ function toggleCV(){
   $('cv-lbl').textContent=S.cv?'Kundenansicht aktiv':'Kundenansicht';
 }
 
-function nav(view){
+function nav(view,skipHistory){
   S.prevView=S.currentView;
   var views=['home','configs','pipeline','review','setup'];
   views.forEach(function(v){
@@ -1530,7 +1540,7 @@ function nav(view){
   $('view-config').style.display='none';
   $('cv-toggle').style.display='none';
   S.currentView=view;
-  location.hash=view;
+  if(!skipHistory)history.pushState({view:view},'','?view='+view);
   if(view==='home')renderHome();
   if(view==='configs')renderConfigs();
   if(view==='pipeline')renderPipeline();
@@ -1551,18 +1561,25 @@ async function renderHome(){
 
   // ── BLOCK 1: Wiedervorlage ──
   var followups=active.filter(function(c){return c.followup_date&&c.followup_date<=tomorrowStr})
-    .sort(function(a,b){return a.followup_date.localeCompare(b.followup_date)});
+    .sort(function(a,b){
+      // Escalated (>2 days overdue) first, then by date
+      var aEsc=a.followup_date<today&&Math.floor((new Date(today)-new Date(a.followup_date))/86400000)>2;
+      var bEsc=b.followup_date<today&&Math.floor((new Date(today)-new Date(b.followup_date))/86400000)>2;
+      if(aEsc!==bEsc)return aEsc?-1:1;
+      return a.followup_date.localeCompare(b.followup_date);
+    });
   var b1='<div class="home-block"><div class="home-block-title">Wiedervorlage</div>';
   if(followups.length){
     b1+=followups.map(function(c){
       var isOD=c.followup_date<today;
       var isToday=c.followup_date===today;
       var days=Math.floor((new Date(today)-new Date(c.followup_date))/86400000);
+      var escalated=isOD&&days>2;
       var tagClass=isOD?'hb-tag-red':'hb-tag-amber';
       var tagText=isOD?(days===1?'1 Tag':days+' Tage')+' \u00fcberf\u00e4llig':isToday?'Heute':'Morgen';
       var sub=esc(c.status);
       if(c.contact_subtype&&c.status==='In Kontakt')sub+=' \u00b7 '+esc(c.contact_subtype);
-      return '<div class="hb-item" onclick="openConfig('+c.id+')">'
+      return '<div class="hb-item'+(escalated?' escalated':'')+'" onclick="openConfig('+c.id+')">'
         +'<div><div class="hb-name">'+esc(c.customer_name)+'</div><div class="hb-meta">'+sub+'</div></div>'
         +'<span class="hb-tag '+tagClass+'">'+tagText+'</span></div>';
     }).join('');
@@ -1790,13 +1807,39 @@ async function onKcolDrop(e){
   if(!cfgId||!newStatus)return;
   var cfg=S.configs.find(function(c){return c.id===cfgId});
   if(!cfg||cfg.status===newStatus)return;
+  // Pflichtfelder prüfen
+  if(FOLLOWUP_REQUIRED.indexOf(newStatus)>=0&&!cfg.followup_date){
+    toast('Wiedervorlage ist Pflicht f\u00fcr \u201e'+newStatus+'\u201c \u2014 bitte erst im Lead setzen');
+    renderPipeline();return;
+  }
+  if(FOLLOWUP_REQUIRED.indexOf(newStatus)>=0){
+    // Ball prompt via modal
+    var oldStatus=cfg.status;
+    openModal('Ball liegt bei\u2026',false,
+      '<p style="font-size:13px;color:var(--ink2);margin-bottom:16px">Wer ist als N\u00e4chstes dran f\u00fcr \u201e'+esc(newStatus)+'\u201c bei '+esc(cfg.customer_name)+'?</p>'
+      +'<div style="display:flex;gap:10px;justify-content:center">'
+      +'<button class="btn btn-primary" onclick="finishKanbanDrop('+cfgId+',\''+esc(newStatus)+'\',\'uns\')">Bei uns</button>'
+      +'<button class="btn btn-primary" style="background:var(--blue)" onclick="finishKanbanDrop('+cfgId+',\''+esc(newStatus)+'\',\'kunde\')">Beim Kunden</button>'
+      +'</div>');
+    return;
+  }
+  executeKanbanDrop(cfgId,newStatus,null);
+}
+async function finishKanbanDrop(cfgId,newStatus,ball){
+  closeModal();
+  executeKanbanDrop(cfgId,newStatus,ball);
+}
+async function executeKanbanDrop(cfgId,newStatus,ball){
+  var cfg=S.configs.find(function(c){return c.id===cfgId});
+  if(!cfg)return;
   var oldStatus=cfg.status;
   var oldDefault=STATUS_PROB[oldStatus]||10;
   var currentProb=cfg.win_probability!=null?cfg.win_probability:oldDefault;
   cfg.status=newStatus;
-  // Only auto-update if probability is still on the old status default
   if(currentProb===oldDefault)cfg.win_probability=STATUS_PROB[newStatus]||cfg.win_probability;
-  await db.update('configurations',cfgId,{status:newStatus,win_probability:cfg.win_probability,updated_at:new Date().toISOString()});
+  var upd={status:newStatus,win_probability:cfg.win_probability,updated_at:new Date().toISOString()};
+  if(ball){cfg.ball_at=ball;cfg.ball_since=todayStr();upd.ball_at=ball;upd.ball_since=todayStr();}
+  await db.update('configurations',cfgId,upd);
   db.insert('activities',{configuration_id:cfgId,type:'Notiz',note:'Status: '+oldStatus+' \u2192 '+newStatus,created_at:new Date().toISOString()});
   toast(cfg.customer_name+': '+oldStatus+' \u2192 '+newStatus);
   renderPipeline();
@@ -2070,13 +2113,13 @@ async function doCreate(status){
 }
 
 // ─── OPEN CONFIG ──────────────────────────────────────────────────────────────
-async function openConfig(id){
+async function openConfig(id,skipHistory){
   showLoading();
   await loadMaster();
   var confs=await db.get('configurations');
   S.cfg=(confs.data||[]).find(function(c){return c.id==id});
   if(!S.cfg)return;
-  location.hash='config/'+id;
+  if(!skipHistory)history.pushState({view:'detail',id:id},'','?view=detail&id='+id);
   var results=await Promise.all([
     db.get('config_items',{configuration_id:id}),
     db.get('versions',{configuration_id:id}),
@@ -2139,22 +2182,57 @@ function onVehicleChange(id){
   if(S.activeTab==='ausstattung')renderAusstattung();
 }
 
+var FOLLOWUP_REQUIRED=['Qualifizierung','Konzept & Folgetermin','Angebot versendet'];
 function onStatusChange(newStatus){
   var oldStatus=S.cfg.status;
+  // Check if followup + ball required
+  if(FOLLOWUP_REQUIRED.indexOf(newStatus)>=0){
+    if(!S.cfg.followup_date){
+      // Show inline warning, revert select
+      var warn=$('followup-warn');
+      if(warn){warn.style.display='block';warn.textContent='Bitte Wiedervorlage setzen bevor du fortf\u00e4hrst.';}
+      $('sb-status').value=oldStatus;
+      toast('Wiedervorlage ist Pflicht f\u00fcr \u201e'+newStatus+'\u201c');
+      return;
+    }
+    // Ball must be set — prompt if not explicitly chosen
+    if(!S.cfg.ball_at||(!S.cfg._ballExplicit&&oldStatus!==newStatus)){
+      showBallPrompt(newStatus,oldStatus);
+      return;
+    }
+  }
+  applyStatusChange(oldStatus,newStatus);
+}
+function showBallPrompt(newStatus,oldStatus){
+  openModal('Ball liegt bei\u2026',false,
+    '<p style="font-size:13px;color:var(--ink2);margin-bottom:16px">Wer ist als N\u00e4chstes dran f\u00fcr \u201e'+esc(newStatus)+'\u201c?</p>'
+    +'<div style="display:flex;gap:10px;justify-content:center">'
+    +'<button class="btn btn-primary" onclick="finishBallPrompt(\'uns\',\''+esc(newStatus)+'\',\''+esc(oldStatus)+'\')">Bei uns</button>'
+    +'<button class="btn btn-primary" style="background:var(--blue)" onclick="finishBallPrompt(\'kunde\',\''+esc(newStatus)+'\',\''+esc(oldStatus)+'\')">Beim Kunden</button>'
+    +'</div>');
+}
+function finishBallPrompt(ball,newStatus,oldStatus){
+  closeModal();
+  S.cfg.ball_at=ball;S.cfg.ball_since=todayStr();S.cfg._ballExplicit=true;
+  updateBallUI();
+  applyStatusChange(oldStatus,newStatus);
+}
+function applyStatusChange(oldStatus,newStatus){
   S.cfg.status=newStatus;
+  // Clear followup warning
+  var warn=$('followup-warn');if(warn)warn.style.display='none';
   if(newStatus==='Abgeschlossen'&&!S.cfg.closed_at){S.cfg.closed_at=new Date().toISOString()}
   else if(newStatus!=='Abgeschlossen'){S.cfg.closed_at=null}
   var oldDefault=STATUS_PROB[oldStatus]||10;
   var currentProb=S.cfg.win_probability!=null?S.cfg.win_probability:oldDefault;
   var newDefault=STATUS_PROB[newStatus]||10;
-  // Only auto-update if probability is still on the old status default (not manually overridden)
   if(currentProb===oldDefault){
     S.cfg.win_probability=newDefault;$('prob-slider').value=newDefault;$('prob-val').textContent=newDefault+'%';
   }
   if(oldStatus&&oldStatus!==newStatus){
     db.insert('activities',{configuration_id:S.cfg.id,type:'Notiz',note:'Status: '+oldStatus+' \u2192 '+newStatus,created_at:new Date().toISOString()});
   }
-  renderStatusExtra();
+  renderStatusExtra();scheduleAutoSave();
 }
 function renderStatusExtra(){
   var el=$('sb-status-extra');if(!el)return;
@@ -2189,6 +2267,34 @@ function onDiscardReason(val){
   S.cfg.discard_reason=val;
   if(val){db.insert('activities',{configuration_id:S.cfg.id,type:'Notiz',note:'Verworfen: '+val,created_at:new Date().toISOString()})}
   scheduleAutoSave();
+}
+function showFollowupHelp(){
+  openModal('Wie funktioniert die Wiedervorlage?',false,
+    '<div style="font-size:13px;line-height:1.7;color:var(--ink2)">'
+    +'<div style="font-weight:600;margin-bottom:6px">Was ist Wiedervorlage?</div>'
+    +'<p style="margin-bottom:14px">Erinnerung wann du einen Lead wieder kontaktieren oder intern weiterbearbeiten solltest.</p>'
+    +'<div style="font-weight:600;margin-bottom:6px">Ampel-Bedeutung</div>'
+    +'<div style="margin-bottom:14px">'
+    +'<div style="margin-bottom:4px">\ud83d\udd34 <strong>\u00dcberf\u00e4llig</strong> \u2013 sofort handeln</div>'
+    +'<div style="margin-bottom:4px">\ud83d\udfe1 <strong>Heute oder morgen</strong> \u2013 bald handeln</div>'
+    +'<div>\ud83d\udfe2 <strong>In der Zukunft</strong> \u2013 alles im Plan</div>'
+    +'</div>'
+    +'<div style="font-weight:600;margin-bottom:6px">Automatisch gesetzt bei</div>'
+    +'<div style="margin-bottom:14px">'
+    +'\u2192 In Kontakt / Mail gesendet: heute +7 Tage<br>'
+    +'\u2192 In Kontakt / Termin vereinbart: Termindatum<br>'
+    +'\u2192 Nachfassen-Button: +3 / +7 / +14 Tage (Auswahl)'
+    +'</div>'
+    +'<div style="font-weight:600;margin-bottom:6px">Pflichtfeld bei</div>'
+    +'<div style="margin-bottom:14px">'
+    +'\u2192 Qualifizierung, Konzept & Folgetermin, Angebot versendet'
+    +'</div>'
+    +'<div style="font-weight:600;margin-bottom:6px">Eskalation</div>'
+    +'<div>'
+    +'\u2192 Mehr als 2 Tage \u00fcberf\u00e4llig: Lead wird rot markiert und erscheint ganz oben in der Wiedervorlage-Liste'
+    +'</div>'
+    +'</div>'
+    +'<div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Verstanden</button></div>');
 }
 function renderFollowupButton(){
   var wrap=$('sb-followup-btn');
@@ -4347,11 +4453,28 @@ async function appStart(){
   await loadMaster();
   var su=$('su-url');var sk=$('su-key');
   if(su)su.value=SURL;if(sk)sk.value=SKEY;
+  var params=new URLSearchParams(location.search);
+  var viewParam=params.get('view');
+  var idParam=parseInt(params.get('id'));
+  // Fallback: support old hash-based URLs
   var h=(location.hash||'').replace('#','');
-  if(h.startsWith('config/')){var cid=parseInt(h.split('/')[1]);if(cid)openConfig(cid);else nav('home')}
+  if(viewParam==='detail'&&idParam){openConfig(idParam)}
+  else if(viewParam&&['home','configs','pipeline','review'].indexOf(viewParam)>=0){nav(viewParam)}
+  else if(h.startsWith('config/')){var cid=parseInt(h.split('/')[1]);if(cid)openConfig(cid);else nav('home')}
   else if(['configs','pipeline','review'].indexOf(h)>=0){nav(h)}
   else{nav('home')}
 }
+
+// Browser history
+window.addEventListener('popstate',function(e){
+  if(e.state&&e.state.view==='detail'&&e.state.id){
+    openConfig(e.state.id,true);
+  } else if(e.state&&e.state.view){
+    nav(e.state.view,true);
+  } else {
+    nav('home',true);
+  }
+});
 
 // Unsaved changes warning
 var _dirty=false;
