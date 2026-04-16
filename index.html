@@ -1205,6 +1205,8 @@ var db={
 // ─── UTILS ───────────────────────────────────────────────────────────────────
 var fmt=function(n){return(+n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' \u20ac'};
 var fmtK=function(n){return n>=1000?(n/1000).toFixed(0)+'k':Math.round(n).toString()};
+var brutto=function(netto){return Math.round((parseFloat(netto)||0)*1.19*100)/100};
+var netto=function(brut){return Math.round((parseFloat(brut)||0)/1.19*100)/100};
 var fmtPct=function(n){return(n>=0?'+':'')+n+' %'};
 var esc=function(s){var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML};
 var $=function(id){return document.getElementById(id)};
@@ -1596,10 +1598,10 @@ async function renderHome(){
   },0);
   var totalEstimated=active.reduce(function(s,c){return s+(parseFloat(c.estimated_value)||0)},0);
   var b2='<div class="home-block"><div class="home-block-title">Pipeline gewichtet</div>'
-    +'<div class="hb-stat">'+fmtK(weightedSum)+' \u20ac</div>'
+    +'<div class="hb-stat">'+fmtK(weightedSum)+' \u20ac <span style="font-size:14px;font-weight:400;color:var(--ink3)">netto</span></div>'
     +'<div class="hb-stat-sub">aus '+active.length+' aktiven Leads</div>'
     +'<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">'
-    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)"><span>Ungewichtet</span><span style="font-weight:600;color:var(--ink)">'+fmtK(totalEstimated)+' \u20ac</span></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)"><span>Ungewichtet netto</span><span style="font-weight:600;color:var(--ink)">'+fmtK(totalEstimated)+' \u20ac</span></div>'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-top:4px"><span>\u00d8 Wahrscheinlichkeit</span><span style="font-weight:600;color:var(--ink)">'+(totalEstimated?Math.round(weightedSum/totalEstimated*100):0)+'%</span></div>'
     +'</div></div>';
 
@@ -1673,7 +1675,7 @@ function renderConfigList(q){
         else if(c.followup_date===today)followupHint='<span style="font-size:10px;color:var(--amber);margin-left:6px">↩ heute</span>';
       }
       var valHint='';
-      if(c.estimated_value)valHint='<span style="font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums">'+fmtK(c.estimated_value)+' €</span>';
+      if(c.estimated_value)valHint='<span style="font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums">'+fmtK(c.estimated_value)+' \u20ac <span style="font-size:9px">netto</span></span>';
       var srcBadge=c.customer_source?'<span style="font-size:10px;color:var(--ink3);background:var(--surface3);padding:1px 6px;border-radius:4px">'+esc(c.customer_source)+'</span>':'';
       html+='<div class="config-card" onclick="openConfig('+c.id+')">'
         +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><div class="card-name">'+esc(c.customer_name)+'</div>'+followupHint+'</div>'
@@ -1711,8 +1713,8 @@ async function renderPipeline(){
 
   $('pipeline-sub').textContent=pipeline.length+' offene Projekte';
   $('pipeline-summary').innerHTML=
-    '<div class="ps-card"><div class="ps-label">Offene Pipeline</div><div class="ps-val">'+fmtK(pipeVal)+' \u20ac</div><div class="ps-sub">'+pipeline.length+' Konfigurationen</div></div>'
-    +'<div class="ps-card"><div class="ps-label">Gewichtet</div><div class="ps-val">'+fmtK(weightedVal)+' \u20ac</div><div class="ps-sub">inkl. Wahrscheinlichkeit</div></div>'
+    '<div class="ps-card"><div class="ps-label">Offene Pipeline</div><div class="ps-val">'+fmtK(pipeVal)+' \u20ac</div><div class="ps-sub">netto \u00b7 '+pipeline.length+' Konfigurationen</div></div>'
+    +'<div class="ps-card"><div class="ps-label">Gewichtet</div><div class="ps-val">'+fmtK(weightedVal)+' \u20ac</div><div class="ps-sub">netto \u00b7 inkl. Wahrscheinlichkeit</div></div>'
     +'<div class="ps-card"><div class="ps-label">Abgeschlossen</div><div class="ps-val">'+won.length+'</div><div class="ps-sub">Projekte gewonnen</div></div>'
     +'<div class="ps-card"><div class="ps-label">Gesamt aktiv</div><div class="ps-val">'+S.configs.filter(function(c){return c.status!=='verworfen'}).length+'</div><div class="ps-sub">Konfigurationen</div></div>';
 
@@ -1948,7 +1950,7 @@ async function renderReview(){
   var kpiHtml='';
   if(wonConfigs.length||avgDays){
     kpiHtml='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:20px">'
-      +'<div class="ps-card"><div class="ps-label">Ø Auftragswert</div><div class="ps-val">'+(avgWonVal?fmtK(avgWonVal)+' €':'&mdash;')+'</div><div class="ps-sub">aus '+wonVals.length+' Abschlüssen</div></div>'
+      +'<div class="ps-card"><div class="ps-label">\u00d8 Auftragswert</div><div class="ps-val">'+(avgWonVal?fmtK(avgWonVal)+' \u20ac':'&mdash;')+'</div><div class="ps-sub">netto'+(avgWonVal?' / '+fmtK(brutto(avgWonVal))+' \u20ac brutto':'')+' \u00b7 '+wonVals.length+' Abschl\u00fcsse</div></div>'
       +'<div class="ps-card"><div class="ps-label">Ø Abschlussdauer</div><div class="ps-val">'+(avgDays?avgDays+' Tage':'&mdash;')+'</div><div class="ps-sub">von Anfrage bis Abschluss</div></div>'
       +'<div class="ps-card"><div class="ps-label">Abgeschlossen gesamt</div><div class="ps-val">'+wonConfigs.length+'</div><div class="ps-sub">im gewählten Zeitraum</div></div>'
       +'</div>';
@@ -2082,7 +2084,8 @@ function showNewConfigWithStatus(status){
     +'<div><label class="f-label">Telefon</label><input class="f-input" id="nc-ph" placeholder="+49 \u2026"/></div>'
     +'<div><label class="f-label">E-Mail</label><input class="f-input" id="nc-em" placeholder="name@firma.de"/></div>'
     +'<div><label class="f-label">Wiedervorlage</label><input type="date" class="f-input" id="nc-f"/></div>'
-    +'<div><label class="f-label">Sch\u00e4tzwert (\u20ac)</label><input type="number" class="f-input" id="nc-ev" placeholder="optional"/></div>'
+    +'<div><label class="f-label">Auftragswert netto</label><input type="number" class="f-input" id="nc-ev" placeholder="netto" oninput="var b=$(\'nc-ev-brutto\');if(b)b.value=this.value?brutto(this.value):\'\'"/></div>'
+    +'<div><label class="f-label">Auftragswert brutto</label><input type="number" class="f-input" id="nc-ev-brutto" placeholder="brutto" oninput="var a=$(\'nc-ev\');if(a)a.value=this.value?netto(this.value):\'\'"/></div>'
     +'</div>'
     +'<div class="modal-actions">'
     +'<button class="btn" onclick="closeModal()">Abbrechen</button>'
@@ -2357,7 +2360,7 @@ function renderUebersicht(){
     +'<div style="display:flex;flex-direction:column;gap:7px">';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Leistungen</span><span style="font-weight:500">'+S.items.length+' Positionen</span></div>';
   html+='<div class="hide-int" style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Gesamtwert</span><span style="font-weight:700;font-size:15px">'+fmt(t.total)+'</span></div>';
-  if(cfg.estimated_value&&!S.items.length)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Schätzwert</span><span style="font-weight:500">'+fmt(cfg.estimated_value)+'</span></div>';
+  if(cfg.estimated_value&&!S.items.length)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Auftragswert</span><span style="font-weight:500">'+fmt(cfg.estimated_value)+' <span style="font-size:11px;color:var(--ink3)">netto</span> / '+fmt(brutto(cfg.estimated_value))+' <span style="font-size:11px;color:var(--ink3)">brutto</span></span></div>';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wahrscheinlichkeit</span><span style="font-weight:500">'+(cfg.win_probability!=null?cfg.win_probability:STATUS_PROB[cfg.status]||10)+'%</span></div>';
   if(cfg.followup_date)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wiedervorlage</span><span style="font-weight:500;color:'+(cfg.followup_date<today?'var(--red)':cfg.followup_date===today?'var(--amber)':'var(--ink)')+'">'+new Date(cfg.followup_date).toLocaleDateString('de-DE')+'</span></div>';
   html+='</div></div>';
@@ -2427,11 +2430,7 @@ function renderUebersicht(){
     }
   }
 
-  // Budget warning
-  var projVal=t.total||(cfg.estimated_value||0);
-  if(projVal>0&&projVal<80000){
-    html+='<div class="alert-banner alert-amber" style="margin-bottom:14px"><div><div class="alert-title">Projektwert unter Mindestbudget</div><div class="alert-sub">Aktuell '+fmt(projVal)+' \u2014 Mindestbudget 80.000 \u20ac</div></div></div>';
-  }
+
 
   // Ball status
   var ballOverdue=ballAt==='kunde'&&ballDays>=5&&!(cfg.followup_date&&cfg.followup_date>=today);
@@ -2861,7 +2860,8 @@ function renderKopfdaten(){
     +(cfg.customer_source&&SOURCES.indexOf(cfg.customer_source)<0?'<input class="f-input" id="kd-src-other" value="'+esc(cfg.customer_source)+'" style="margin-top:6px" oninput="S.cfg.customer_source=this.value;scheduleAutoSave()"/>':'<input class="f-input" id="kd-src-other" placeholder="Quelle\u2026" style="display:none;margin-top:6px" oninput="S.cfg.customer_source=this.value;scheduleAutoSave()"/>')+'</div>'
     +'<div><label class="f-label">Zeithorizont</label><input class="f-input" value="'+esc(cfg.time_horizon||'')+'" oninput="S.cfg.time_horizon=this.value;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Rabatt / Zuschlag (%)</label><input class="f-input" type="number" step="0.5" value="'+(cfg.configuration_discount_percent||0)+'" oninput="S.cfg.configuration_discount_percent=clamp(this.value,-50,50,0);updatePrices();scheduleAutoSave()"/></div>'
-    +'<div><label class="f-label">Schätzwert (€)</label><input class="f-input" type="number" value="'+(cfg.estimated_value||'')+'" placeholder="für frühe Gespräche" oninput="S.cfg.estimated_value=parseFloat(this.value)||null;scheduleAutoSave()"/></div>'
+    +'<div><label class="f-label">Auftragswert netto</label><input class="f-input" type="number" id="kd-ev-netto" value="'+(cfg.estimated_value||'')+'" placeholder="netto" oninput="S.cfg.estimated_value=parseFloat(this.value)||null;var b=$(\'kd-ev-brutto\');if(b)b.value=this.value?brutto(this.value):\'\';scheduleAutoSave()"/></div>'
+    +'<div><label class="f-label">Auftragswert brutto</label><input class="f-input" type="number" id="kd-ev-brutto" value="'+(cfg.estimated_value?brutto(cfg.estimated_value):'')+'" placeholder="brutto" oninput="var n=netto(this.value);S.cfg.estimated_value=n||null;var a=$(\'kd-ev-netto\');if(a)a.value=n||\'\'  ;scheduleAutoSave()"/></div>'
     +'<div><label class="f-label">Fahrzeug von uns?</label><select class="f-input" onchange="S.cfg.vehicle_from_us=this.value===\'ja\'"><option'+((!cfg.vehicle_from_us)?' selected':'')+'>nein</option><option value="ja"'+(cfg.vehicle_from_us?' selected':'')+'>ja</option></select></div>'
     +'<div class="full"><label class="f-label">Projektnotiz</label><textarea class="f-input" oninput="S.cfg.notes=this.value;$(\'proj-note\').value=this.value">'+esc(cfg.notes||'')+'</textarea></div>'
     +'</div>'
