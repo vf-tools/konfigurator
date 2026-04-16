@@ -3486,7 +3486,7 @@ async function importLeistungenExcel(input){
 async function openAdmin(){$('admin-wrap').classList.add('open');await loadMaster();renderATabs();renderABody()}
 function closeAdmin(){$('admin-wrap').classList.remove('open')}
 function renderATabs(){
-  var tabs=[['cat','Kategorien'],['sub','Unterkategorien'],['svc','Leistungen'],['attr','Ausstattung'],['veh','Fahrzeuge'],['set','Einstellungen'],['import','Import / Export']];
+  var tabs=[['cat','Kategorien'],['sub','Unterkategorien'],['svc','Leistungen'],['attr','Ausstattung'],['veh','Fahrzeuge'],['set','Einstellungen'],['import','Import / Export'],['changelog','Changelog']];
   $('atabs').innerHTML=tabs.map(function(t){return'<button class="atab'+(S.adminTab===t[0]?' active':'')+'" onclick="switchATab(\''+t[0]+'\')">'+t[1]+'</button>'}).join('');
 }
 function switchATab(k){S.adminTab=k;renderATabs();renderABody()}
@@ -3692,7 +3692,89 @@ async function renderABody(){
     });
     el.innerHTML=html;
   }
+  if(S.adminTab==='changelog'){
+    el.innerHTML=CHANGELOG.map(function(entry){
+      return '<div style="margin-bottom:20px">'
+        +'<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">'
+        +'<span style="font-size:11px;font-weight:700;color:#fff;background:var(--pine);padding:2px 8px;border-radius:4px;white-space:nowrap">'+esc(entry.date)+'</span>'
+        +'<span style="font-size:15px;font-weight:700">'+esc(entry.title)+'</span></div>'
+        +'<ul style="margin:0;padding-left:20px;font-size:13px;color:var(--ink2);line-height:1.7">'
+        +entry.items.map(function(it){return '<li>'+esc(it)+'</li>'}).join('')
+        +'</ul></div>';
+    }).join('<div style="border-top:1px solid var(--border);margin-bottom:20px"></div>');
+  }
 }
+
+var CHANGELOG=[
+  {date:'16.04.2026',title:'Changelog, Stammdaten-Update, UI-Fixes',items:[
+    'Changelog-Tab im Admin-Bereich hinzugefügt',
+    'Stammdaten (97 Leistungen) aus Excel aktualisiert — Stunden + Materialkosten EK netto',
+    'Änderungsnotiz-Feld beim Speichern und Version erstellen',
+    'Überfällige Wiedervorlagen deutlich auffälliger (rot, fett, weiß-auf-rot Tag)',
+    'Zurück-Button in Config-Ansicht führt zur Pipeline statt Home',
+    'Eskalierter Wiedervorlage-Rand mit mehr Abstand'
+  ]},
+  {date:'16.04.2026',title:'Netto/Brutto-System',items:[
+    'estimated_value wird netto gespeichert',
+    'Migration aller bestehenden Werte von brutto → netto',
+    'Dual-Anzeige überall: netto primär, brutto transparent dahinter',
+    'Neue Hilfsfunktionen fmtNB() und fmtKNB() für konsistente Darstellung',
+    'Sidebar, Pipeline, Kanban, Übersicht, Positionen, Review — alle umgestellt',
+    'Fix: Pipeline-Filter nutzte Kleinschreibung für Status (verworfen statt Verworfen)'
+  ]},
+  {date:'15.04.2026',title:'Wiedervorlage-Pflicht & Browser-History',items:[
+    'Wiedervorlage ist Pflicht bei Status Qualifizierung, Konzept & Folgetermin, Angebot versendet',
+    'Ball-Pflicht: bei uns oder beim Kunden muss gesetzt werden',
+    'Eskalation: >2 Tage überfällig wird visuell hervorgehoben',
+    'Info-Modal mit Ampel-Erklärung für Wiedervorlage-System',
+    'Browser-History mit pushState/popstate statt Hash-Routing',
+    'Deep Links zu Views und einzelnen Konfigurationen'
+  ]},
+  {date:'15.04.2026',title:'Admin-Tooltips & Formeln',items:[
+    'Tooltips (ⓘ) bei allen Kalkulations-Einstellungen',
+    'Zwei aufklappbare Formelblöcke: Angebotspreis-Formel und BWL-Formel',
+    'Fixkosten/Monat entfernt (nicht mehr relevant)',
+    'Live-Beispielrechnung im Admin'
+  ]},
+  {date:'15.04.2026',title:'BWL-KPIs & kategorisierte Config-Liste',items:[
+    'Vollständige BWL-Kalkulation: Deckungsbeitrag, Betriebsergebnis, kalk. Gewinn',
+    'Material-GKZ, Fertigungs-GKZ, W&G-Zuschlag — global + pro Projekt überschreibbar',
+    'Nachkalkulation mit Ist-Stunden und tatsächlichem Stundensatz',
+    'Review-Aggregation: Ø DB%, Ø BE%, Stundeneffizienz, Mehraufwand',
+    'Konfigurationen-Liste gruppiert nach Offen / Abgeschlossen / Verworfen',
+    'Quellen-Badges, Followup-Hinweise, Wert-Anzeige in der Liste'
+  ]},
+  {date:'14.04.2026',title:'Home-Dashboard & Kanban',items:[
+    'Neues Home-Dashboard mit 3 Blöcken: Wiedervorlage, Pipeline gewichtet, Ball-Verteilung',
+    'Drag & Drop im Kanban-Board der Pipeline',
+    'Smarte Win-Probability-Defaults je Status (5%–100%)',
+    'Gewichtete Pipeline-Berechnung'
+  ]},
+  {date:'14.04.2026',title:'Status-System & Review überarbeitet',items:[
+    'Komplett überarbeitetes Status-System: Neu → In Kontakt → Qualifizierung → Konzept → Angebot → Abgeschlossen/Verworfen',
+    'Followup-Workflow mit Datumsfeldern',
+    'Review-Seite mit Pipeline-Verlauf, Conversion-Analyse, Verlustgründen'
+  ]},
+  {date:'13.04.2026',title:'Kundenansicht & Sicherheit',items:[
+    'Kundenansicht (CV-Modus): Alle Preise und interne Felder versteckt',
+    'Projekt löschen mit Mathe-Challenge als Sicherheitsabfrage',
+    'Validierung, Error-Handling, Security-Hardening'
+  ]},
+  {date:'12.04.2026',title:'Bildverwaltung',items:[
+    'Bulk-Image-Upload für Service-Bilder',
+    'Flexible Dateinamen (nach Service-ID)',
+    'Zoom & Crop-Dialog mit Mausrad-Zoom',
+    'Re-Crop für bereits hochgeladene Bilder',
+    'Original-Bilder werden für späteres Re-Cropping gespeichert'
+  ]},
+  {date:'11.04.2026',title:'Preiskalkulation & Grundlagen',items:[
+    'Dynamische Preiskalkulation aus Material + Arbeitsstunden',
+    'Supabase als einzige Datenquelle (Single Source of Truth)',
+    'Korrekte Labels: Materialkosten netto statt Material EK',
+    'Service-IDs im Admin sichtbar',
+    'Test-Suite mit 18 automatisierten Playwright-Tests'
+  ]}
+];
 
 async function savePF(){var v=$('pf-in').value;await db.setSetting('price_adjustment_factor',v);S.priceFactor=parseFloat(v)||1.0;toast('Gespeichert')}
 async function saveHR(){var v=$('hr-in').value;await db.setSetting('hourly_rate',v);S.hourlyRate=parseFloat(v)||85.0;toast('Stundensatz gespeichert')}
