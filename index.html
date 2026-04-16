@@ -989,11 +989,11 @@ body.cv .svc-price,body.cv .svc-foot,body.cv .price-total,body.cv .ptv,body.cv #
       </div>
       <div class="price-block">
         <div class="price-hd">Preisübersicht</div>
-        <div class="price-row"><span>Leistungen</span><span class="val" id="sb-sub">0,00 €</span></div>
+        <div class="price-row"><span>Leistungen <span style="font-size:10px;color:var(--ink3)">brutto</span></span><span class="val" id="sb-sub">0,00 €</span></div>
         <div class="price-row" id="sb-attr-row" style="display:none"><span>Ausstattung</span><span class="val" id="sb-attr-val"></span></div>
         <div class="price-row" id="sb-disc-row" style="display:none"><span id="sb-disc-lbl">Rabatt</span><span class="val" id="sb-disc-val"></span></div>
         <div class="fac-info hide-int" id="sb-fac"></div>
-        <div class="price-total"><span class="ptl">Gesamt</span><span class="ptv" id="sb-total">0,00 €</span></div>
+        <div class="price-total"><span class="ptl">Gesamt <span style="font-size:10px;font-weight:400;color:var(--ink3)">brutto</span></span><span class="ptv" id="sb-total">0,00 €</span></div>
       </div>
       <div class="sb-actions hide-int">
         <button class="btn btn-full" onclick="createVersion()">+ Version erstellen</button>
@@ -1724,6 +1724,7 @@ async function renderPipeline(){
       var items=allItems.filter(function(i){return i.configuration_id===c.id});
       var attrs=allAttrs.filter(function(a){return a.configuration_id===c.id});
       var val=configTotal(c,items,attrs);
+      var valLabel=((!items||!items.length)&&c.estimated_value)?'netto':'brutto';
       var prob=configWinProb(c);
       var tag='';
       var ampel='';
@@ -1762,7 +1763,7 @@ async function renderPipeline(){
         +phone
         +ballBadge
         +'<div class="kcard-footer">'
-        +'<span class="kcard-price">'+(val?fmtK(val)+' \u20ac':'&mdash;')+'</span>'
+        +'<span class="kcard-price">'+(val?fmtK(val)+' € <span style="font-size:10px;font-weight:400;color:var(--ink3)">'+valLabel+'</span>':'&mdash;')+'</span>'
         +'<span class="kcard-prob">'+prob+'%</span>'
         +'</div>'
         +tag
@@ -2359,7 +2360,8 @@ function renderUebersicht(){
     +'<div class="section-lbl" style="margin-bottom:10px">Zahlen</div>'
     +'<div style="display:flex;flex-direction:column;gap:7px">';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Leistungen</span><span style="font-weight:500">'+S.items.length+' Positionen</span></div>';
-  html+='<div class="hide-int" style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Gesamtwert</span><span style="font-weight:700;font-size:15px">'+fmt(t.total)+'</span></div>';
+  html+='<div class="hide-int" style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Gesamtwert</span><span style="font-weight:700;font-size:15px">'+fmt(t.total)+' <span style="font-size:11px;font-weight:400;color:var(--ink3)">brutto</span></span></div>';
+  if(t.total)html+='<div class="hide-int" style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--ink3)">netto</span><span style="color:var(--ink3)">'+fmt(t.total/1.19)+'</span></div>';
   if(cfg.estimated_value&&!S.items.length)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Auftragswert</span><span style="font-weight:500">'+fmt(cfg.estimated_value)+' <span style="font-size:11px;color:var(--ink3)">netto</span> / '+fmt(brutto(cfg.estimated_value))+' <span style="font-size:11px;color:var(--ink3)">brutto</span></span></div>';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wahrscheinlichkeit</span><span style="font-weight:500">'+(cfg.win_probability!=null?cfg.win_probability:STATUS_PROB[cfg.status]||10)+'%</span></div>';
   if(cfg.followup_date)html+='<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Wiedervorlage</span><span style="font-weight:500;color:'+(cfg.followup_date<today?'var(--red)':cfg.followup_date===today?'var(--amber)':'var(--ink)')+'">'+new Date(cfg.followup_date).toLocaleDateString('de-DE')+'</span></div>';
