@@ -195,7 +195,7 @@ input,select,textarea{font-family:var(--font-ui);font-size:15px}
 .hb-name{font-weight:500}
 .hb-meta{font-size:11px;color:var(--ink3)}
 .hb-tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap}
-.hb-tag-red{background:var(--red-bg);color:var(--red)}
+.hb-tag-red{background:var(--red);color:#fff;font-weight:600}
 .hb-tag-amber{background:var(--amber-bg);color:var(--amber)}
 .hb-tag-green{background:#e8f5e9;color:#2e7d32}
 .hb-empty{font-size:12px;color:var(--ink4);padding:8px 0}
@@ -600,7 +600,9 @@ input[type=range]::-webkit-slider-thumb{
   vertical-align:middle;margin-left:3px;line-height:1;
 }
 .fup-help:hover{background:var(--pine)}
-.hb-item.escalated{border:2px solid var(--red);border-radius:8px;background:var(--red-bg);padding:10px 12px;margin:-2px -4px}
+.hb-item.escalated{border:2px solid var(--red);border-radius:8px;background:#f2d4d0;padding:10px 12px;margin:4px -4px}
+.hb-item.escalated .hb-name{color:var(--red);font-weight:700}
+.hb-item.escalated .hb-tag{background:var(--red);color:#fff;font-weight:700}
 .config-card.escalated{border:2px solid var(--red);background:var(--red-bg)}
 .f-input{
   width:100%;padding:10px 13px;
